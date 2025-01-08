@@ -1,0 +1,18 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+format = """
+$directory\
+$git_branch\
+"""
+palette = 'gruvbox_dark'
+
+
+[directory]
+style = "fg:#f0e68c"
+format = "[$path]($style) "
+truncation_length = 3
+truncation_symbol = "…/"
+
+[git_branch]
+style = "fg:#ffa0a0"
+format = "[$branch]($style) "
+

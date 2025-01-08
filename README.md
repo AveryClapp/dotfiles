@@ -1,5 +1,6 @@
 # dotfiles
-Repo to store dotfiles for easy access across machines
-## Prereqs
-Vim - Vimplug, Vim airline
-Tmux - TPM, Tmux CPU 
+This repo is used to store my current configuration files for various different
+things. The shell script when used will (attempt) to set up all the necessary
+dependencies. The only thing you need to have installed beforehand is GIT CLI.
+
+i 

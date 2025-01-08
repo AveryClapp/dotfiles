@@ -154,8 +154,6 @@ if filereadable(expand("~/.vimrc.indent"))
 endif
 
 set hidden
-" Show command-line completions as a horizontal list
 set wildmenu
-"
 " " Control how Vim cycles through matches
 set wildmode=longest:full,full
