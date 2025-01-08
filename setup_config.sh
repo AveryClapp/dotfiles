@@ -1,10 +1,10 @@
 #!/bin/bash
 
-mv vimrc .vimrc | mv .vimrc ~
-mv tmux.conf .tmux.conf | mv .tmux.conf ~
-mkdir ~/.config
-mv zshrc .zshrc | mv .zshrc ~
-mv starpship.toml ~/.config
+mv vimrc ~/.vimrc
+mv tmux.conf ~/.tmux.conf
+mkdir -p ~/.config
+mv zshrc ~/.zshrc
+mv starship.toml ~/.config/
 
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
