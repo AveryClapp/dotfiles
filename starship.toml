@@ -1,10 +1,14 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 format = """
+$username$hostname\
 $directory\
 $git_branch\
 """
-palette = 'gruvbox_dark'
 
+[username]
+style_user = "fg:#f0e68c"
+format = "[$user]($style) "
+show_always = true
 
 [directory]
 style = "fg:#f0e68c"
