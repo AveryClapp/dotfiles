@@ -1,6 +1,4 @@
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.  # Initialization code that may require console input (password prompts, [y/n] confirmations, etc.) must go above this block; everything else may go below.
 
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
@@ -37,6 +35,14 @@ source $ZSH/oh-my-zsh.sh
 if [[ -n $SSH_CONNECTION ]]; then
 	export EDITOR='vim'
 fi
+alias vim="nvim"
 alias ta='tmux attach -t'
-alias ugrad='ssh aclapp1@ugradx.cs.jhu.edu'
+alias ugrad_os='ssh -X aclapp1@ugradx.cs.jhu.edu'
+alias ugrad='ssh aclapp1@ugrad23.cs.jhu.edu'
+alias setup_recoll='install_name_tool -add_rpath /opt/homebrew/lib /opt/homebrew/bin/recoll'
+alias pi='ssh averyclapp@192.168.50.135'
+run_research() {
+	ssh -i ~/Documents/aclapp1.pem ec2-user@"$1"
+}
+
 eval "$(starship init zsh)"
