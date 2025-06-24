@@ -10,13 +10,9 @@ export ZSH="$HOME/.oh-my-zsh"
 HYPHEN_INSENSITIVE="true"
 zstyle ':omz:update' mode auto      # update automatically without asking
 HIST_STAMPS="mm/dd/yyyy"
+source $ZSH/oh-my-zsh.sh
 #ZSH_THEME="powerlevel10k/powerlevel10k"
 
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
 plugins=(
 git
 aws
@@ -30,17 +26,12 @@ tmux
 )
 
 
-source $ZSH/oh-my-zsh.sh
-# Preferred editor for local and remote sessions
 if [[ -n $SSH_CONNECTION ]]; then
 	export EDITOR='vim'
 fi
+
 alias vim="nvim"
 alias ta='tmux attach -t'
-alias ugrad_os='ssh -X aclapp1@ugradx.cs.jhu.edu'
-alias ugrad='ssh aclapp1@ugrad23.cs.jhu.edu'
-alias setup_recoll='install_name_tool -add_rpath /opt/homebrew/lib /opt/homebrew/bin/recoll'
-alias pi='ssh averyclapp@192.168.50.135'
 run_research() {
 	ssh -i ~/Documents/aclapp1.pem ec2-user@"$1"
 }

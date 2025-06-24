@@ -1,11 +1,5 @@
 #!/bin/bash
 
-mv vimrc ~/.vimrc
-mv tmux.conf ~/.tmux.conf
-mkdir -p ~/.config
-mv zshrc ~/.zshrc
-mv starship.toml ~/.config/
-
 curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
     "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim"
 
@@ -24,6 +18,10 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     if [ -x "$(command -v apt-get)" ]; then
         # Debian/Ubuntu
         sudo apt-get update
+	sudo add-apt-repository ppa:neovim-ppa/unstable -y
+	sudo apt update
+	sudo apt install make gcc ripgrep unzip git xclip neovim
+
         sudo apt-get install -y tmux zsh
 		unzip JetBrainsMono.zip -d ~/.local/share/fonts
 		fc-cache -fv ~/.local/share/fonts
@@ -32,6 +30,11 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
 else
     echo "Not a compatible OS version, must complete manually"
 fi
+mv tmux.conf ~/.tmux.conf
+mkdir -p ~/.config
+mv zshrc ~/.zshrc
+mv starship.toml ~/.config/
+mv nvim ~/.config/
 
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 tmux source ~/.tmux.conf
