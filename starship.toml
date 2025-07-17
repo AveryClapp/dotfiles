@@ -6,16 +6,16 @@ $git_branch\
 """
 
 [username]
-style_user = "fg:#7aa2f7"  # Tokyo Night's bright blue
+style_user = "fg:#1e66f5"  # Catppuccin Latte blue
 format = "[$user]($style) "
 show_always = true
 
 [directory]
-style = "fg:#bb9af7"  # Tokyo Night's purple
+style = "fg:#8839ef"  # Catppuccin Latte mauve
 format = "[$path]($style) "
 truncation_length = 3
 truncation_symbol = "…/"
 
 [git_branch]
-style = "fg:#f7768e"  # Tokyo Night's pink/red
+style = "fg:#d20f39"  # Catppuccin Latte red
 format = "[$branch]($style) "

@@ -1,3 +1,9 @@
+vim.opt.tabstop = 4
+vim.opt.shiftwidth = 4
+vim.opt.softtabstop = 4
+vim.opt.expandtab = true
+vim.opt.smartindent = true
+vim.opt.autoindent = true
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 vim.g.have_nerd_font = true
@@ -495,21 +501,28 @@ require('lazy').setup {
       }
     end,
   },
-
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
+    'catppuccin/nvim',
+    name = 'catppuccin',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     init = function()
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'catppuccin-latte'
       vim.cmd.hi 'Comment gui=none'
-      vim.g.tokyonight_italic_comments = true
-      vim.g.tokyonight_sidebars = { 'qf', 'vista_kind', 'terminal', 'packer' }
-      vim.api.nvim_set_hl(0, 'LineNrAbove', { fg = '#ff9e64' })
-      vim.api.nvim_set_hl(0, 'LineNrBelow', { fg = '#ff9e64' })
-      vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = '#7aa2f7', bold = true })
+      vim.g.catppuccin_flavour = 'latte' -- latte, frappe, macchiato, mocha
+      require('catppuccin').setup {
+        flavour = 'latte',
+        integrations = {
+          telescope = true,
+          nvimtree = true,
+          which_key = true,
+        },
+      }
+      vim.api.nvim_set_hl(0, 'LineNrAbove', { fg = '#fe640b' })
+      vim.api.nvim_set_hl(0, 'LineNrBelow', { fg = '#fe640b' })
+      vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = '#1e66f5', bold = true })
     end,
   },
 

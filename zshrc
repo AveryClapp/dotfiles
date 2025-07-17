@@ -10,30 +10,69 @@ export ZSH="$HOME/.oh-my-zsh"
 HYPHEN_INSENSITIVE="true"
 zstyle ':omz:update' mode auto      # update automatically without asking
 HIST_STAMPS="mm/dd/yyyy"
-source $ZSH/oh-my-zsh.sh
 #ZSH_THEME="powerlevel10k/powerlevel10k"
 
+# Which plugins would you like to load?
+# Standard plugins can be found in $ZSH/plugins/
+# Custom plugins may be added to $ZSH_CUSTOM/plugins/
+# Example format: plugins=(rails git textmate ruby lighthouse)
+# Add wisely, as too many plugins slow down shell startup.
 plugins=(
 git
-aws
-docker
-python
-pylint
-npm
 macos
-docker
 tmux
 )
 
 
-if [[ -n $SSH_CONNECTION ]]; then
-	export EDITOR='vim'
-fi
+source $ZSH/oh-my-zsh.sh
+# Preferred editor for local and remote sessions
 
-alias vim="nvim"
+compile() {
+    g++ -std=c++17 -O2 -Wall "$1" -o sol; ./sol
+}
+
+alias vim='nvim'
 alias ta='tmux attach -t'
+#alias setup_recoll='install_name_tool -add_rpath /opt/homebrew/lib /opt/homebrew/bin/recoll'
+#alias pi='ssh averyclapp@192.168.50.135'
+cmake_build() {
+    cmake -S . -B build; cmake --build build
+}
+
+copy_file() {
+    cat "$1" | pbcopy
+}
 run_research() {
-	ssh -i ~/Documents/aclapp1.pem ec2-user@"$1"
+	ssh -Y -i ~/Documents/aclapp1.pem ec2-user@"$1"
+}
+get_profile() {
+	scp -i ~/Documents/aclapp1.pem ec2-user@"$1":~/cuda_work/tests/profile.ncu-rep ~/Documents/School/Research/NVIDIA\ Nsight\ Compute/
 }
 
 eval "$(starship init zsh)"
+
+#export DYLD_LIBRARY_PATH=/opt/homebrew/lib:$DYLD_LIBRARY_PATH
+#export RECOLL_DATADIR=/opt/homebrew/share/recoll/
+# Replace your current NVM loading code with this
+nvm() {
+    unset -f nvm
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+    nvm "$@"
+}
+
+# Optional: Pre-define commonly used node commands to auto-load NVM
+node() {
+    unset -f node
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+    node "$@"
+}
+
+npm() {
+    unset -f npm
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+    npm "$@"
+}
+
