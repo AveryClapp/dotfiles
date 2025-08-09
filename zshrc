@@ -33,6 +33,9 @@ compile() {
 
 alias vim='nvim'
 alias ta='tmux attach -t'
+
+alias gs='git status'
+alias gd='git diff'
 #alias setup_recoll='install_name_tool -add_rpath /opt/homebrew/lib /opt/homebrew/bin/recoll'
 #alias pi='ssh averyclapp@192.168.50.135'
 cmake_build() {
