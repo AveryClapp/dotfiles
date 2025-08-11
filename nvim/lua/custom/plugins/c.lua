@@ -4,6 +4,7 @@ return {
   {
     'p00f/clangd_extensions.nvim',
     ft = { 'c', 'cpp', 'objc', 'objcpp' },
+    print 'LSP config is loading!',
     opts = {
       inlay_hints = {
         inline = true,

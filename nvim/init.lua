@@ -44,14 +44,25 @@ vim.keymap.set('n', '<C-h>', '<C-w><C-h>', { desc = 'Move focus to the left wind
 vim.keymap.set('n', '<C-l>', '<C-w><C-l>', { desc = 'Move focus to the right window' })
 vim.keymap.set('n', '<C-j>', '<C-w><C-j>', { desc = 'Move focus to the lower window' })
 vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper window' })
-
--- Diagnostic configuration
 vim.diagnostic.config {
-  virtual_text = false,
-  signs = false,
-  underline = false,
+  virtual_text = {
+    prefix = '●', -- Could be '■', '▎', '▍', '▌', '▋', '▊', '▉', or any icon
+    source = "if_many", -- Show source if multiple sources
+  },
+  signs = true,
+  underline = true,
   update_in_insert = false,
+  severity_sort = true,
+  float = {
+    focusable = false,
+    style = "minimal",
+    border = "rounded",
+    source = "always",
+    header = "",
+    prefix = "",
+  },
 }
+
 
 vim.opt.undofile = true
 vim.opt.undodir = vim.fn.stdpath 'data' .. '/undodir'

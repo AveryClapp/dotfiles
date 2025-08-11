@@ -42,6 +42,10 @@ alias ga='git add .'
 alias gc='git commit -m'
 #alias setup_recoll='install_name_tool -add_rpath /opt/homebrew/lib /opt/homebrew/bin/recoll'
 #alias pi='ssh averyclapp@192.168.50.135'
+cmake_vim_configure(){
+    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build;
+    cp build/compile_commands.json .
+}
 cmake_build() {
     cmake -S . -B build; cmake --build build
 }
@@ -83,3 +87,4 @@ npm() {
     npm "$@"
 }
 
+export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
