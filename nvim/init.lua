@@ -234,7 +234,6 @@ require('lazy').setup {
         sqlls = {},
         lemminx = {},
         tailwindcss = {},
-        volar = {},
         angularls = {},
       }
 
@@ -276,7 +275,7 @@ require('lazy').setup {
   {
     'mrcjkb/rustaceanvim',
     version = '^6',
-    lazy = false,
+    lazy = true,
     ft = { 'rust' },
   },
 
