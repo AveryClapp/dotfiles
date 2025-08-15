@@ -43,11 +43,18 @@ alias gc='git commit -m'
 #alias setup_recoll='install_name_tool -add_rpath /opt/homebrew/lib /opt/homebrew/bin/recoll'
 #alias pi='ssh averyclapp@192.168.50.135'
 cmake_vim_configure(){
-    cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -B build;
     cp build/compile_commands.json .
 }
-cmake_build() {
-    cmake -S . -B build; cmake --build build
+
+cmake_create() {
+    local build_type=${1:-Debug} # Default to Debug build
+    conan install . --build=missing -of=build # Download/setup dependencies
+    cmake --preset conan-release       # Configure build system  
+    cmake --build --preset conan-release  # Compile code
+}
+
+cmake_update () {
+    cmake --build --preset conan-release # Compile code, no need to setup and configure build system
 }
 
 copy_file() {
