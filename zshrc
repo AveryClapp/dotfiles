@@ -48,7 +48,7 @@ cmake_vim_configure(){
 
 cmake_create() {
     local build_type=${1:-Debug} # Default to Debug build
-    conan install . --build=missing -of=build -s build_type=Debug # Download/setup dependencies
+    conan install . --build=missing -of=build -s build_type=$build_type # Download/setup dependencies
     cmake --preset conan-release       # Configure build system  
     cmake --build --preset conan-release  # Compile code
 }
