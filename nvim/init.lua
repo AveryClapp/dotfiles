@@ -16,6 +16,7 @@ vim.schedule(function()
   vim.opt.clipboard = 'unnamedplus'
 end)
 
+vim.o.background = "dark"
 vim.opt.breakindent = true
 vim.opt.undofile = true
 vim.opt.ignorecase = true
@@ -409,28 +410,6 @@ require('lazy').setup {
           { name = 'path' },
         },
       }
-    end,
-  },
-
-  { -- Colorscheme
-    'catppuccin/nvim',
-    name = 'catppuccin',
-    priority = 1000,
-    init = function()
-      vim.cmd.colorscheme 'catppuccin-latte'
-      vim.cmd.hi 'Comment gui=none'
-      vim.g.catppuccin_flavour = 'latte'
-      require('catppuccin').setup {
-        flavour = 'latte',
-        integrations = {
-          telescope = true,
-          nvimtree = true,
-          which_key = true,
-        },
-      }
-      vim.api.nvim_set_hl(0, 'LineNrAbove', { fg = '#fe640b' })
-      vim.api.nvim_set_hl(0, 'LineNrBelow', { fg = '#fe640b' })
-      vim.api.nvim_set_hl(0, 'CursorLineNr', { fg = '#1e66f5', bold = true })
     end,
   },
 
