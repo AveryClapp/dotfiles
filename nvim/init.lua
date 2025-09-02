@@ -553,8 +553,7 @@ require('lazy').setup {
       },
       auto_install = true,
       highlight = {
-        enable = true,
-        additional_vim_regex_highlighting = { 'ruby' },
+        enable = false,
       },
       indent = { enable = true, disable = { 'ruby' } },
       incremental_selection = {
