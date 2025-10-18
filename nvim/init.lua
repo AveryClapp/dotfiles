@@ -468,8 +468,8 @@ require('lazy').setup {
               'filename',
               path = 1,
               symbols = {
-                modified = '  ',
-                readonly = '  ',
+                modified = '[+]',
+                readonly = '[-]',
                 unnamed = '  ',
               },
             },
