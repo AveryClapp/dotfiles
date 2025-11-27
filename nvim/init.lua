@@ -470,7 +470,6 @@ require('lazy').setup {
               symbols = {
                 modified = '[+]',
                 readonly = '[-]',
-                unnamed = '  ',
               },
             },
           },

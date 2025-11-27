@@ -6,16 +6,16 @@ $git_branch\
 """
 
 [username]
-style_user = "fg:#7E9CD8"  # crystalBlue - Kanagawa Wave's primary blue
+style_user = "fg:#C8C093"  # oldWhite - More neutral off-white
 format = "[$user]($style) "
 show_always = true
 
 [directory]
-style = "fg:#938AA9"  # springViolet1 - Wave theme purple
+style = "fg:#727169"  # fujiGray - Subtle gray instead of purple
 format = "[$path]($style) "
 truncation_length = 3
 truncation_symbol = "…/"
 
 [git_branch]
-style = "fg:#E82424"  # samuraiRed - Wave theme's vibrant red
+style = "fg:#C34043"  # autumnRed - Muted red instead of bright red
 format = "[$branch]($style) "
