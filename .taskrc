@@ -1,0 +1,117 @@
+# taskwarrior config
+data.location=/Users/averyclapp/.task
+news.version=3.4.2
+
+# Theme - Kanagawa Wave inspired
+color.due.today=color214
+color.due=color203
+color.overdue=color196
+color.active=color109
+color.scheduled=color223
+color.recurring=color141
+color.tagged=color180
+color.blocked=color95
+color.blocking=color167
+color.project.none=
+color.tag.next=color109
+color.tag.none=
+
+# UI Colors (Kanagawa palette)
+color.header=color252
+color.footnote=color95
+color.debug=color242
+color.error=color203
+color.warning=color214
+
+# Calendar colors
+color.calendar.due.today=color0 on color214
+color.calendar.due=color0 on color203
+color.calendar.weekend=on color235
+color.calendar.holiday=color0 on color180
+color.calendar.weeknumber=color109
+color.calendar.today=color0 on color109
+
+# Report colors
+color.label=
+color.label.sort=
+color.alternate=on color233
+color.uda.priority.H=color167
+color.uda.priority.M=color180
+color.uda.priority.L=color95
+
+# Task states (Kanagawa inspired)
+color.completed=color95
+color.deleted=color95
+color.active=color223 on color237
+color.summary.bar=color109 on color235
+color.summary.background=on color233
+color.history.add=color109
+color.history.done=color95
+color.history.delete=color203
+
+# Sync colors
+color.sync.added=color109
+color.sync.changed=color214
+color.sync.rejected=color203
+
+# Burndown
+color.burndown.done=on color109
+color.burndown.pending=on color237
+color.burndown.started=on color214
+
+# Undo
+color.undo.before=color167
+color.undo.after=color109
+
+# Reports
+report.next.columns=id,start.age,entry.age,depends,priority,project,tags,recur,scheduled.countdown,due.relative,until.remaining,description.count,urgency
+report.next.labels=ID,Active,Age,Deps,P,Project,Tag,Recur,S,Due,Until,Description,Urg
+default.command=next
+
+# Urgency
+urgency.user.tag.next.coefficient=15.0
+urgency.due.coefficient=12.0
+urgency.blocking.coefficient=8.0
+urgency.active.coefficient=4.0
+
+# Date settings
+weekstart=monday
+dateformat=Y-M-D
+dateformat.report=Y-M-D H:N
+
+# Vim-like aliases
+alias.rm=delete
+alias.del=delete
+alias.ls=list
+alias.a=add
+alias.m=modify
+alias.e=edit
+alias.d=done
+alias.s=start
+alias.h=help
+alias.c=context
+alias.n=next
+alias.w=waiting
+
+# Contexts
+context.work.read=project:work or project:research or project:interviews
+context.personal.read=project:personal or project:home
+
+# UDA - task estimates
+uda.estimate.type=string
+uda.estimate.label=Est
+uda.estimate.values=5m,15m,30m,1h,2h,4h,1d
+
+# Minimal, clean output (neovim-like)
+verbose=blank,header,footnote,label,new-id,affected,edit,special,project,sync,unwait,recur
+search.case.sensitive=no
+list.all.projects=yes
+list.all.tags=yes
+
+# Column padding for cleaner look
+column.padding=1
+row.padding=0
+
+# Use unicode symbols
+fontunderline=no
+

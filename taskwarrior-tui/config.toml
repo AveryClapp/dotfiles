@@ -1,0 +1,54 @@
+# taskwarrior-tui config - Kanagawa themed, neovim-like
+
+[style]
+theme = "dark"
+
+# Kanagawa Wave color palette
+[style.calendar]
+today = { fg = "black", bg = "cyan" }
+due_today = { fg = "black", bg = "yellow" }
+due = { fg = "black", bg = "red" }
+
+[style.task]
+active = { fg = "yellow", bold = true }
+completed = { fg = "darkgray" }
+deleted = { fg = "darkgray" }
+
+[task-report]
+# Use 'next' as default (like your .taskrc)
+default = "next"
+
+# Neovim-inspired keybindings
+[keybindings]
+# Basic navigation (vim)
+quit = 'q'
+next = 'j'
+previous = 'k'
+
+# Extended vim navigation (like your neovim config with J/K for 10 lines)
+next-page = 'J'
+previous-page = 'K'
+goto-top = 'g g'
+goto-bottom = 'G'
+
+# Window/pane navigation (like your C-h/j/k/l neovim bindings)
+next-tab = 'L'
+previous-tab = 'H'
+
+# Task operations (neovim leader key style)
+task-done = 'd'
+task-start-stop = 's'
+task-add = 'a'
+task-modify = 'm'
+task-edit = 'e'
+task-delete = 'x'
+task-undo = 'u'
+
+# Search (vim-like)
+command = ':'
+search = '/'
+
+# Other useful bindings
+refresh = '<C-r>'
+help = '?'
+log = 'l'

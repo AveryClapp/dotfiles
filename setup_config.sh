@@ -116,6 +116,7 @@ validate_source_files() {
     local missing_files=()
     local required_files=(
         ".zshrc"
+        ".taskrc"
         "tmux.conf"
         "starship.toml"
     )
@@ -126,9 +127,12 @@ validate_source_files() {
         fi
     done
 
-    # Check nvim directory
+    # Check required directories
     if [ ! -d "nvim" ]; then
         missing_files+=("nvim/")
+    fi
+    if [ ! -d "taskwarrior-tui" ]; then
+        missing_files+=("taskwarrior-tui/")
     fi
 
     if [ ${#missing_files[@]} -gt 0 ]; then
@@ -237,15 +241,22 @@ install_dependencies() {
     print_info "Installing dependencies..."
 
     if [[ "$OS" == "macos" ]]; then
-        brew install tmux zsh git ripgrep fd unzip make gcc curl wget
+        brew install tmux zsh git ripgrep fd unzip make gcc curl wget task taskwarrior-tui
     elif [[ "$OS" == "linux" ]]; then
         if command_exists apt-get; then
             # Ubuntu/Debian
             sudo apt-get update
-            sudo apt-get install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig
+            sudo apt-get install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig taskwarrior
+            # taskwarrior-tui from cargo or manual install
+            if ! command_exists taskwarrior-tui; then
+                print_warning "taskwarrior-tui not in apt, install via cargo or download from GitHub"
+            fi
         elif command_exists dnf; then
             # Fedora/RHEL 8+/Amazon Linux 2023
-            sudo dnf install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig
+            sudo dnf install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig task
+            if ! command_exists taskwarrior-tui; then
+                print_warning "taskwarrior-tui not in dnf, install via cargo or download from GitHub"
+            fi
         elif command_exists yum; then
             # Amazon Linux 2/RHEL 7/CentOS 7
             # Enable EPEL for additional packages
@@ -259,7 +270,7 @@ install_dependencies() {
                 }
             fi
             # Install packages (note: fd is 'fd-find' on some distros)
-            sudo yum install -y tmux zsh git unzip make gcc curl wget xclip fontconfig
+            sudo yum install -y tmux zsh git unzip make gcc curl wget xclip fontconfig task 2>/dev/null || print_warning "taskwarrior not available in yum"
             # ripgrep and fd might need EPEL or manual install
             sudo yum install -y ripgrep fd-find || {
                 print_warning "Could not install ripgrep/fd via yum. Attempting alternatives..."
@@ -273,7 +284,10 @@ install_dependencies() {
             }
         elif command_exists pacman; then
             # Arch Linux
-            sudo pacman -S --noconfirm tmux zsh git ripgrep fd unzip make gcc curl wget xclip fontconfig
+            sudo pacman -S --noconfirm tmux zsh git ripgrep fd unzip make gcc curl wget xclip fontconfig task
+            if ! command_exists taskwarrior-tui; then
+                print_warning "taskwarrior-tui not in pacman, install via AUR or cargo"
+            fi
         else
             print_error "Unsupported package manager"
             exit 1
@@ -407,10 +421,12 @@ backup_configs() {
 
     local configs=(
         "$HOME/.zshrc"
+        "$HOME/.taskrc"
         "$HOME/.tmux.conf"
         "$HOME/.config/nvim"
         "$HOME/.config/starship.toml"
         "$HOME/.config/alacritty"
+        "$HOME/.config/taskwarrior-tui"
     )
 
     local backed_up=0
@@ -438,6 +454,7 @@ copy_configs() {
 
     # Copy dotfiles (note: source is .zshrc with leading dot)
     cp .zshrc ~/.zshrc
+    cp .taskrc ~/.taskrc
     cp tmux.conf ~/.tmux.conf
     cp starship.toml ~/.config/starship.toml
 
@@ -449,6 +466,15 @@ copy_configs() {
         print_success "Neovim configuration copied"
     else
         print_warning "nvim directory not found, skipping..."
+    fi
+
+    # Copy taskwarrior-tui directory
+    if [ -d "taskwarrior-tui" ]; then
+        rm -rf ~/.config/taskwarrior-tui
+        cp -r taskwarrior-tui ~/.config/
+        print_success "Taskwarrior TUI configuration copied"
+    else
+        print_warning "taskwarrior-tui directory not found, skipping..."
     fi
 
     print_success "Configuration files copied"
