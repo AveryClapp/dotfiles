@@ -1,13 +1,22 @@
 # Dotfiles
 
-This repository contains my personal configuration files for various development tools.
+Personal configuration files for development tools with unified Kanagawa Wave theme and vim-centric workflows.
+
+## Features
+
+- **Unified Theme** - Kanagawa Wave across all tools
+- **Vim Keybindings** - Consistent shortcuts in Neovim, Taskwarrior-TUI, and Tmux
+- **Task Management** - Taskwarrior with custom aliases and TUI
+- **LSP Support** - 15+ languages with autocomplete and diagnostics
 
 ## Contents
 
-- **Neovim** - Modern vim configuration based on kickstart.nvim
-- **Tmux** - Terminal multiplexer with custom keybindings and Tokyo Night theme
+- **Neovim** - Modern vim configuration based on kickstart.nvim with Kanagawa Wave theme
+- **Taskwarrior** - Task management with custom Kanagawa theme and vim-style aliases
+- **Taskwarrior-TUI** - Terminal UI for Taskwarrior with vim keybindings
+- **Tmux** - Terminal multiplexer with custom keybindings
 - **Zsh** - Shell configuration with Oh My Zsh
-- **Starship** - Cross-shell prompt with Tokyo Night colors
+- **Starship** - Cross-shell prompt
 
 ## Prerequisites
 
@@ -30,11 +39,12 @@ chmod +x setup_config.sh
 ```
 
 The script will:
-- Install all necessary dependencies (Neovim, tmux, zsh, ripgrep, etc.)
+- Install all necessary dependencies (Neovim, tmux, zsh, ripgrep, taskwarrior, etc.)
 - Install JetBrains Mono Nerd Font
 - Install Oh My Zsh and Starship prompt
 - Backup your existing configurations
 - Copy all configuration files to their appropriate locations
+- Set up Taskwarrior and Taskwarrior-TUI with custom configurations
 
 3. Follow the post-installation steps displayed by the script
 
@@ -57,47 +67,65 @@ The script will:
 ## Configuration Details
 
 ### Neovim
-- Based on kickstart.nvim with additional customizations
-- Includes LSP support for multiple languages
-- Custom keybindings (J/K for 10j/10k navigation, H/L for line start/end)
-- Tokyo Night color scheme
-- Harpoon for quick file navigation
-- Git integration with fugitive and gitsigns
+- Based on kickstart.nvim with Kanagawa Wave theme
+- LSP support: Go, Rust, Python, TypeScript, C/C++, Java, and more
+- Custom keybindings: `J/K` (10-line jumps), `H/L` (line start/end), Space (leader)
+- Telescope (fuzzy finding, git-aware), Harpoon (file navigation)
+- Git integration (gitsigns, fugitive), lualine, alpha-nvim
+
+### Taskwarrior
+- Kanagawa color theme matching Neovim
+- Vim-style aliases: `task a` (add), `task d` (done), `task m` (modify), `task s` (start), `task e` (edit)
+- Pre-configured contexts: `work`, `personal`
+- Custom task estimates: 5m, 15m, 30m, 1h, 2h, 4h, 1d
+- See [docs/taskwarrior-guide.md](docs/taskwarrior-guide.md) for complete documentation
+
+### Taskwarrior-TUI
+- Vim keybindings: `j/k` (navigate), `J/K` (page scroll), `gg/G` (top/bottom), `H/L` (tabs)
+- Search: `/` (search), `:` (command mode)
+- Task operations: `a/d/s/m/e/x/u`
+- See [docs/taskwarrior-guide.md](docs/taskwarrior-guide.md) for complete reference
 
 ### Tmux
 - Prefix changed to `Ctrl-a`
 - Vim-style pane navigation
-- Tokyo Night themed status bar with CPU/Memory monitoring
+- Themed status bar with system monitoring
 - Window navigation with Alt+Left/Right
 - Copy mode with vi keybindings
 
 ### Zsh
 - Oh My Zsh with useful plugins (git, aws, docker, python, tmux)
-- Starship prompt with minimal Tokyo Night theme
+- Starship prompt with minimal theme
 - Custom aliases (vim → nvim)
+
+## Documentation
+
+- [Taskwarrior Guide](docs/taskwarrior-guide.md) - Complete task management guide with keybindings and workflows
 
 ## Customization
 
-Feel free to modify any configuration files after installation. The main files are:
-- `~/.config/nvim/init.lua` - Neovim configuration
-- `~/.tmux.conf` - Tmux configuration
-- `~/.zshrc` - Zsh configuration
-- `~/.config/starship.toml` - Starship prompt configuration
+Key files:
+- `~/.config/nvim/init.lua` - Neovim
+- `~/.config/nvim/lua/custom/plugins/colorscheme.lua` - Kanagawa theme
+- `~/.taskrc` - Taskwarrior
+- `~/.config/taskwarrior-tui/config.toml` - Taskwarrior-TUI
+- `~/.tmux.conf` - Tmux
+- `~/.zshrc` - Zsh
+- `~/.config/starship.toml` - Starship
+
+Apply changes: Run `./setup_config.sh` or manually copy modified files to `~/`
 
 ## Troubleshooting
 
-### Fonts not displaying correctly
-- Ensure your terminal is configured to use JetBrains Mono Nerd Font
-- On Linux, run `fc-cache -fv` to refresh font cache
+**Fonts not displaying**: Configure terminal to use JetBrains Mono Nerd Font. On Linux, run `fc-cache -fv`.
 
-### Tmux plugins not loading
-- Make sure TPM is installed: `git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm`
-- Press `Ctrl-a + I` inside tmux to install plugins
+**Tmux plugins**: Press `Ctrl-a + I` inside tmux to install.
 
-### Neovim plugins not installing
-- Check `:Lazy` for plugin status
-- Ensure you have a stable internet connection
-- Try `:Lazy sync` to force plugin synchronization
+**Neovim plugins**: Check `:Lazy` status or run `:Lazy sync`.
+
+**Taskwarrior colors**: Ensure terminal supports 256 colors and `$TERM` is set (e.g., `xterm-256color`).
+
+**Taskwarrior-TUI keybindings**: Verify config with `cat ~/.config/taskwarrior-tui/config.toml`.
 
 ## Supported Platforms
 
