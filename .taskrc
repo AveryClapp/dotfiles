@@ -66,6 +66,7 @@ color.undo.after=color109
 # Reports
 report.next.columns=id,start.age,entry.age,depends,priority,project,tags,recur,scheduled.countdown,due.relative,until.remaining,description.count,urgency
 report.next.labels=ID,Active,Age,Deps,P,Project,Tag,Recur,S,Due,Until,Description,Urg
+report.next.sort=due+,urgency-
 default.command=next
 
 # Urgency
