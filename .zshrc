@@ -25,8 +25,7 @@ alias gpf='git push --force'
 alias ga='git add'
 alias gc='git commit -m'
 #alias setup_recoll='install_name_tool -add_rpath /opt/homebrew/lib /opt/homebrew/bin/recoll'
-alias pi='ssh averyclapp@192.168.50.135'
-alias pi_outside='ssh -p 2222 averyclapp@73.135.69.177'
+alias tasks='taskwarrior-tui'
 alias ugrad='ssh aclapp1@ugrad18.cs.jhu.edu'
 
 cmake_vim_configure(){
