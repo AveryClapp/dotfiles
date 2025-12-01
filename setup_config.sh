@@ -241,19 +241,51 @@ install_dependencies() {
     print_info "Installing dependencies..."
 
     if [[ "$OS" == "macos" ]]; then
-        brew install tmux zsh git ripgrep fd unzip make gcc curl wget task taskwarrior-tui
+        brew install tmux zsh git ripgrep fd unzip make gcc curl wget task taskwarrior-tui zoxide mise fzf bat lazygit
     elif [[ "$OS" == "linux" ]]; then
         if command_exists apt-get; then
             # Ubuntu/Debian
             sudo apt-get update
-            sudo apt-get install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig taskwarrior
+            sudo apt-get install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig taskwarrior fzf bat
+
+            # Install zoxide
+            if ! command_exists zoxide; then
+                curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+            fi
+
+            # Install mise
+            if ! command_exists mise; then
+                curl https://mise.run | sh
+            fi
+
+            # Install lazygit (may need manual install on some versions)
+            if ! sudo apt-get install -y lazygit 2>/dev/null; then
+                print_warning "lazygit not in apt, install from https://github.com/jesseduffield/lazygit"
+            fi
+
             # taskwarrior-tui from cargo or manual install
             if ! command_exists taskwarrior-tui; then
                 print_warning "taskwarrior-tui not in apt, install via cargo or download from GitHub"
             fi
         elif command_exists dnf; then
             # Fedora/RHEL 8+/Amazon Linux 2023
-            sudo dnf install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig task
+            sudo dnf install -y tmux zsh git ripgrep fd-find unzip make gcc curl wget xclip fontconfig task fzf bat
+
+            # Install zoxide
+            if ! command_exists zoxide; then
+                curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+            fi
+
+            # Install mise
+            if ! command_exists mise; then
+                curl https://mise.run | sh
+            fi
+
+            # Install lazygit (may need copr)
+            if ! sudo dnf install -y lazygit 2>/dev/null; then
+                print_warning "lazygit not in dnf, install from https://github.com/jesseduffield/lazygit"
+            fi
+
             if ! command_exists taskwarrior-tui; then
                 print_warning "taskwarrior-tui not in dnf, install via cargo or download from GitHub"
             fi
@@ -271,6 +303,10 @@ install_dependencies() {
             fi
             # Install packages (note: fd is 'fd-find' on some distros)
             sudo yum install -y tmux zsh git unzip make gcc curl wget xclip fontconfig task 2>/dev/null || print_warning "taskwarrior not available in yum"
+
+            # Try to install fzf and bat
+            sudo yum install -y fzf bat 2>/dev/null || print_warning "fzf/bat not in yum repos"
+
             # ripgrep and fd might need EPEL or manual install
             sudo yum install -y ripgrep fd-find || {
                 print_warning "Could not install ripgrep/fd via yum. Attempting alternatives..."
@@ -282,9 +318,28 @@ install_dependencies() {
                     print_info "You can install it manually from: https://github.com/BurntSushi/ripgrep/releases"
                 fi
             }
+
+            # Install zoxide
+            if ! command_exists zoxide; then
+                curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
+            fi
+
+            # Install mise
+            if ! command_exists mise; then
+                curl https://mise.run | sh
+            fi
+
+            # lazygit needs manual install on older systems
+            print_warning "lazygit not available in yum, install from https://github.com/jesseduffield/lazygit"
         elif command_exists pacman; then
             # Arch Linux
-            sudo pacman -S --noconfirm tmux zsh git ripgrep fd unzip make gcc curl wget xclip fontconfig task
+            sudo pacman -S --noconfirm tmux zsh git ripgrep fd unzip make gcc curl wget xclip fontconfig task fzf bat zoxide lazygit
+
+            # Install mise
+            if ! command_exists mise; then
+                curl https://mise.run | sh
+            fi
+
             if ! command_exists taskwarrior-tui; then
                 print_warning "taskwarrior-tui not in pacman, install via AUR or cargo"
             fi
