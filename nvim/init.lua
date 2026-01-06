@@ -16,7 +16,7 @@ vim.schedule(function()
   vim.opt.clipboard = 'unnamedplus'
 end)
 
-vim.o.background = "dark"
+vim.o.background = 'dark'
 vim.opt.breakindent = true
 vim.opt.undofile = true
 vim.opt.ignorecase = true
@@ -48,7 +48,7 @@ vim.keymap.set('n', '<C-k>', '<C-w><C-k>', { desc = 'Move focus to the upper win
 vim.diagnostic.config {
   virtual_text = {
     prefix = '●', -- Could be '■', '▎', '▍', '▌', '▋', '▊', '▉', or any icon
-    source = "if_many", -- Show source if multiple sources
+    source = 'if_many', -- Show source if multiple sources
   },
   signs = true,
   underline = true,
@@ -56,14 +56,13 @@ vim.diagnostic.config {
   severity_sort = true,
   float = {
     focusable = false,
-    style = "minimal",
-    border = "rounded",
-    source = "always",
-    header = "",
-    prefix = "",
+    style = 'minimal',
+    border = 'rounded',
+    source = 'always',
+    header = '',
+    prefix = '',
   },
 }
-
 
 vim.opt.undofile = true
 vim.opt.undodir = vim.fn.stdpath 'data' .. '/undodir'
@@ -123,9 +122,9 @@ require('lazy').setup {
       }
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
-      
+
       local builtin = require 'telescope.builtin'
-      
+
       -- Helper function to get git root or fallback to cwd
       local function get_git_root()
         local git_root = vim.fn.systemlist('git rev-parse --show-toplevel')[1]
@@ -134,18 +133,18 @@ require('lazy').setup {
         end
         return vim.fn.getcwd()
       end
-      
+
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', function()
-        builtin.find_files({ cwd = get_git_root() })
+        builtin.find_files { cwd = get_git_root() }
       end, { desc = '[S]earch [F]iles' })
       vim.keymap.set('n', '<leader>ss', builtin.builtin, { desc = '[S]earch [S]elect Telescope' })
       vim.keymap.set('n', '<leader>sw', function()
-        builtin.grep_string({ cwd = get_git_root() })
+        builtin.grep_string { cwd = get_git_root() }
       end, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', function()
-        builtin.live_grep({ cwd = get_git_root() })
+        builtin.live_grep { cwd = get_git_root() }
       end, { desc = '[S]earch by [G]rep' })
       vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
@@ -264,7 +263,6 @@ require('lazy').setup {
       local ensure_installed = vim.tbl_keys(servers or {})
       vim.list_extend(ensure_installed, {
         -- Formatters
-        'stylua',
         'black',
         'isort',
         'prettierd',
@@ -281,11 +279,14 @@ require('lazy').setup {
         -- Debuggers
         'codelldb',
       })
-
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
       require('mason-lspconfig').setup {
+        ensure_installed = vim.tbl_keys(servers),
         handlers = {
           function(server_name)
+            if server_name == 'stylua' or server_name == 'black' or server_name == 'prettier' then
+              return
+            end
             local server = servers[server_name] or {}
             server.capabilities = vim.tbl_deep_extend('force', {}, capabilities, server.capabilities or {})
             require('lspconfig')[server_name].setup(server)
@@ -511,7 +512,7 @@ require('lazy').setup {
   { -- Treesitter - Syntax highlighting
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
-    main = 'nvim-treesitter.configs',
+    main = 'nvim-treesitter',
     opts = {
       ensure_installed = {
         -- Core languages

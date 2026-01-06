@@ -4,54 +4,52 @@ return {
   {
     'p00f/clangd_extensions.nvim',
     ft = { 'c', 'cpp', 'objc', 'objcpp' },
-    opts = {
-      inlay_hints = {
-        inline = true,
-        only_current_line = false,
-        show_parameter_hints = true,
-        parameter_hints_prefix = '<- ',
-        other_hints_prefix = '=> ',
-      },
-      ast = {
-        role_icons = {
-          type = '🄣',
-          declaration = '🄓',
-          expression = '🄔',
-          statement = ';',
-          specifier = '🄢',
-          ['template argument'] = '🆃',
-        },
-      },
-    },
-  },
-
-  -- LSP Configuration
-  {
-    'neovim/nvim-lspconfig',
-    ft = { 'c', 'cpp', 'objc', 'objcpp' },
+    dependencies = { 'neovim/nvim-lspconfig' },
     config = function()
-      local lspconfig = require 'lspconfig'
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
 
-      lspconfig.clangd.setup {
-        capabilities = capabilities,
+      vim.lsp.config.clangd = {
         cmd = {
           'clangd',
           '--background-index',
           '--clang-tidy',
           '--header-insertion=iwyu',
           '--completion-style=detailed',
-          '--function-arg-placeholders',
           '--fallback-style=llvm',
           '--enable-config',
           '--offset-encoding=utf-16',
           '--header-insertion-decorators',
           '-j=4',
         },
+        filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
+        root_markers = { '.clangd', '.clang-tidy', '.clang-format', 'compile_commands.json', 'compile_flags.txt', '.git' },
+        capabilities = capabilities,
         init_options = {
           usePlaceholders = true,
           completeUnimported = true,
           clangdFileStatus = true,
+        },
+      }
+
+      vim.lsp.enable 'clangd'
+
+      require('clangd_extensions').setup {
+        inlay_hints = {
+          inline = true,
+          only_current_line = false,
+          show_parameter_hints = true,
+          parameter_hints_prefix = '<- ',
+          other_hints_prefix = '=> ',
+        },
+        ast = {
+          role_icons = {
+            type = '🄣',
+            declaration = '🄓',
+            expression = '🄔',
+            statement = ';',
+            specifier = '🄢',
+            ['template argument'] = '🆃',
+          },
         },
       }
     end,
@@ -198,152 +196,6 @@ return {
       vim.keymap.set('n', '<leader>cd', ':CMakeDebug<CR>', { desc = 'CMake: Debug' })
       vim.keymap.set('n', '<leader>ct', ':CMakeRunTest<CR>', { desc = 'CMake: Run Tests' })
       vim.keymap.set('n', '<leader>cs', ':CMakeSelectBuildType<CR>', { desc = 'CMake: Select Build Type' })
-    end,
-  },
-
-  -- Enhanced completion
-  {
-    'hrsh7th/nvim-cmp',
-    event = 'InsertEnter',
-    dependencies = {
-      'hrsh7th/cmp-nvim-lsp',
-      'hrsh7th/cmp-buffer',
-      'hrsh7th/cmp-path',
-      'hrsh7th/cmp-cmdline',
-      'L3MON4D3/LuaSnip',
-      'saadparwaiz1/cmp_luasnip',
-      'rafamadriz/friendly-snippets',
-    },
-    config = function()
-      local cmp = require 'cmp'
-      local luasnip = require 'luasnip'
-
-      require('luasnip.loaders.from_vscode').lazy_load()
-
-      cmp.setup {
-        snippet = {
-          expand = function(args)
-            luasnip.lsp_expand(args.body)
-          end,
-        },
-        mapping = cmp.mapping.preset.insert {
-          ['<C-b>'] = cmp.mapping.scroll_docs(-4),
-          ['<C-f>'] = cmp.mapping.scroll_docs(4),
-          ['<C-Space>'] = cmp.mapping.complete(),
-          ['<C-e>'] = cmp.mapping.abort(),
-          ['<CR>'] = cmp.mapping.confirm { select = true },
-          ['<Tab>'] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-              cmp.select_next_item()
-            elseif luasnip.expand_or_jumpable() then
-              luasnip.expand_or_jump()
-            else
-              fallback()
-            end
-          end, { 'i', 's' }),
-          ['<S-Tab>'] = cmp.mapping(function(fallback)
-            if cmp.visible() then
-              cmp.select_prev_item()
-            elseif luasnip.jumpable(-1) then
-              luasnip.jump(-1)
-            else
-              fallback()
-            end
-          end, { 'i', 's' }),
-        },
-        sources = cmp.config.sources {
-          { name = 'nvim_lsp', priority = 1000 },
-          { name = 'luasnip', priority = 750 },
-          { name = 'buffer', priority = 500 },
-          { name = 'path', priority = 250 },
-        },
-        formatting = {
-          format = function(entry, vim_item)
-            vim_item.menu = ({
-              nvim_lsp = '[LSP]',
-              luasnip = '[Snippet]',
-              buffer = '[Buffer]',
-              path = '[Path]',
-            })[entry.source.name]
-            return vim_item
-          end,
-        },
-      }
-
-      -- Setup for cmdline
-      cmp.setup.cmdline('/', {
-        mapping = cmp.mapping.preset.cmdline(),
-        sources = {
-          { name = 'buffer' },
-        },
-      })
-
-      cmp.setup.cmdline(':', {
-        mapping = cmp.mapping.preset.cmdline(),
-        sources = cmp.config.sources({
-          { name = 'path' },
-        }, {
-          { name = 'cmdline' },
-        }),
-      })
-    end,
-  },
-
-  -- Better syntax highlighting with Treesitter
-  {
-    'nvim-treesitter/nvim-treesitter',
-    build = ':TSUpdate',
-    dependencies = {
-      'nvim-treesitter/nvim-treesitter-textobjects',
-    },
-    config = function()
-      require('nvim-treesitter.configs').setup {
-        ensure_installed = { 'c', 'cpp', 'cmake', 'make', 'ninja', 'comment', 'doxygen' },
-        highlight = { enable = true },
-        indent = { enable = true },
-        incremental_selection = {
-          enable = true,
-          keymaps = {
-            init_selection = '<C-space>',
-            node_incremental = '<C-space>',
-            scope_incremental = '<C-s>',
-            node_decremental = '<C-backspace>',
-          },
-        },
-        textobjects = {
-          select = {
-            enable = true,
-            lookahead = true,
-            keymaps = {
-              ['af'] = '@function.outer',
-              ['if'] = '@function.inner',
-              ['ac'] = '@class.outer',
-              ['ic'] = '@class.inner',
-              ['as'] = '@scope',
-            },
-          },
-          move = {
-            enable = true,
-            set_jumps = true,
-            goto_next_start = {
-              [']m'] = '@function.outer',
-              [']]'] = '@class.outer',
-            },
-            goto_next_end = {
-              [']M'] = '@function.outer',
-              [']['] = '@class.outer',
-            },
-            goto_previous_start = {
-              ['[m'] = '@function.outer',
-              ['[['] = '@class.outer',
-            },
-            goto_previous_end = {
-              ['[M'] = '@function.outer',
-              ['[]'] = '@class.outer',
-            },
-          },
-        },
-      }
     end,
   },
 
