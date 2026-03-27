@@ -7,8 +7,14 @@ A C++/Rust/Python IDE built on lazy.nvim with Kanagawa Wave theme.
 ## Navigation
 
 ### Flash — instant jump anywhere
-Press `s` + 2 chars → labels appear on every match → type label to teleport.
-Works in normal, visual, and operator-pending mode (`ys<flash>)` to surround a jump target).
+| Key | Action |
+|-----|--------|
+| `s` | Jump to any location (normal/visual/operator) |
+| `<leader>S` | Jump to any **treesitter node** by type (function, argument, block, etc.) |
+| `r` (operator) | Remote flash — operate on text far away without moving cursor |
+| `R` (visual/operator) | Treesitter search across the file |
+
+`ys<flash-motion>` to surround a distant target. `d<flash-motion>` to delete it. `r` in operator mode is the most powerful: `yr<flash>` yanks text anywhere on screen.
 
 ### Harpoon — persistent file bookmarks
 | Key | Action |
@@ -82,11 +88,24 @@ Replaces the default `q` with named slots:
 | `yq` | Yank macro as string |
 | `##` | Insert breakpoint (pauses playback) |
 
+### Split / Join (`treesj`)
+| Key | Action |
+|-----|--------|
+| `gS` | Split block to multiline |
+| `gJ` | Join block to single line |
+| `gM` | Toggle split/join |
+
+Works on function args, arrays, objects, conditions — anything treesitter understands.
+`{a, b, c}` → `gS` → three-line block. `gJ` collapses it back.
+
 ### Search & Replace
 | Key | Action |
 |-----|--------|
-| `<leader>sr` | Open grug-far (project-wide search/replace with preview) |
+| `<leader>sr` | grug-far — project-wide regex search/replace with live preview |
 | `<leader>sw` | Search word under cursor |
+| `<leader>sR` | SSR — structural search & replace using treesitter patterns |
+
+SSR is the power tool: search for `foo(___) + bar(___)` and replace with `baz(___)` — matches actual code structure, not text.
 
 ---
 
@@ -100,7 +119,7 @@ Servers managed by Mason: **clangd**, **rust_analyzer**, **pyright**, **lua_ls**
 | `gr` | Find all references (Telescope) |
 | `gh` | Hover docs |
 | `<leader>ca` | Code action |
-| `<leader>rn` | Rename symbol |
+| `<leader>rn` | Rename symbol (live preview as you type) |
 | `]d` / `[d` | Next/prev diagnostic |
 | `<leader>e` | Float diagnostic message |
 
@@ -256,6 +275,53 @@ Run `:TodoTelescope` to list all across the project.
 | `<leader>qd` | Disable session save on exit |
 
 Sessions are managed by `folke/persistence.nvim` and saved automatically on exit.
+
+---
+
+## Vim Fundamentals (high ceiling, no plugins)
+
+### Marks
+| Key | Action |
+|-----|--------|
+| `ma` | Set mark `a` at cursor |
+| `'a` | Jump to line of mark `a` |
+| `` `a `` | Jump to exact position of mark `a` |
+| `'` / `` ` `` | Jump back to position before last jump |
+| `:marks` | List all marks |
+
+Use marks for positions you'll return to within a file. Harpoon for files, marks for positions inside files.
+
+### Registers
+| Register | Contains |
+|----------|----------|
+| `"0` | Last yank (not delete) |
+| `"_` | Black hole — delete without clobbering clipboard |
+| `"+` | System clipboard |
+| `"a`–`"z` | Named registers (pair with macros) |
+| `".` | Last inserted text |
+| `"%` | Current filename |
+
+`"_d` to delete without losing your yanked text. `"0p` to paste your last yank even after deletions.
+
+### Power Commands
+```
+:g/pattern/command       " run command on every matching line
+:g/TODO/norm @q          " run macro on every TODO line
+:%norm A;                " append ; to every line
+:g/^$/d                  " delete all blank lines
+:v/pattern/d             " delete all lines NOT matching pattern
+```
+
+`:.,$s/old/new/g` — replace from current line to end of file.
+`:'<,'>norm I//` — comment every line in visual selection with `norm`.
+
+### Count Motions
+```
+3<C-a>     increment number under cursor by 3
+g<C-a>     increment each line's number sequentially (visual mode)
+5.         repeat last change 5 times
+"2p        paste the second-to-last delete
+```
 
 ---
 

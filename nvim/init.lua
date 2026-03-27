@@ -64,7 +64,6 @@ vim.api.nvim_create_autocmd('LspAttach', {
     map_buf('gd',           vim.lsp.buf.definition)
     map_buf('gr',           require('telescope.builtin').lsp_references)
     map_buf('<leader>ca',   vim.lsp.buf.code_action)
-    map_buf('<leader>rn',   vim.lsp.buf.rename)
     map_buf('gh',           vim.lsp.buf.hover)
     map_buf(']d',           vim.diagnostic.goto_next)
     map_buf('[d',           vim.diagnostic.goto_prev)
