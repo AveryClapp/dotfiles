@@ -31,13 +31,18 @@ return {
       },
     }
 
-    -- Keyboard Shortcuts
-    local keymap = vim.keymap.set
-    local opts = { buffer = true, silent = true }
-    keymap('n', '<leader>tc', '<cmd>CompetiTest receive problem<cr>', { desc = 'Receive Problem', unpack(opts) })
-    keymap('n', '<leader>tr', '<cmd>CompetiTest run<cr>', { desc = 'Run Tests', unpack(opts) })
-    keymap('n', '<leader>ta', '<cmd>CompetiTest add_testcase<cr>', { desc = 'Add Testcase', unpack(opts) })
-    keymap('n', '<leader>te', '<cmd>CompetiTest edit_testcase<cr>', { desc = 'Edit Testcase', unpack(opts) })
-    keymap('n', '<leader>ts', '<cmd>CompetiTest submit<cr>', { desc = 'Submit Problem', unpack(opts) })
+    -- Keyboard Shortcuts (buffer-local to cpp files via autocmd)
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'cpp',
+      callback = function(ev)
+        local o = function(desc) return { buffer = ev.buf, silent = true, desc = desc } end
+        local k = vim.keymap.set
+        k('n', '<leader>tc', '<cmd>CompetiTest receive problem<cr>', o('CP: Receive problem'))
+        k('n', '<leader>tr', '<cmd>CompetiTest run<cr>',             o('CP: Run tests'))
+        k('n', '<leader>ta', '<cmd>CompetiTest add_testcase<cr>',    o('CP: Add testcase'))
+        k('n', '<leader>te', '<cmd>CompetiTest edit_testcase<cr>',   o('CP: Edit testcase'))
+        k('n', '<leader>tS', '<cmd>CompetiTest submit<cr>',          o('CP: Submit'))
+      end,
+    })
   end,
 }

@@ -4,7 +4,11 @@ return {
     'nvim-treesitter/nvim-treesitter',
     build = ':TSUpdate',
     opts = {
-      ensure_installed = { 'c', 'cpp', 'rust', 'lua', 'python' },
+      ensure_installed = {
+        'c', 'cpp', 'rust', 'lua', 'python',
+        'bash', 'json', 'yaml', 'toml', 'markdown', 'markdown_inline',
+        'cmake', 'make', 'vim', 'vimdoc', 'regex',
+      },
       highlight = { enable = true },
       indent    = { enable = true },
       textobjects = {
