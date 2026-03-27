@@ -241,6 +241,10 @@ Run `:TodoTelescope` to list all across the project.
 
 **Dressing** — upgrades `vim.ui.select` (code actions picker) and `vim.ui.input` (rename prompt) with a floating Telescope UI.
 
+**Toggleterm** — `<leader>T` opens a persistent terminal at the bottom of the screen. State is preserved between toggles.
+
+**Project-local config** — drop a `.nvim.lua` in any project root to define project-specific keymaps. Auto-sourced on open.
+
 ---
 
 ## Session Management
