@@ -12,12 +12,14 @@ return {
 
       -- Execution logic
       compile_command = {
-        cpp = { exec = 'g++', args = { '-O3', '$(FNAME)', '-o', '$(FNOEXT)' } },
+        cpp = { exec = 'g++', args = { '-std=c++20', '-O2', '-I' .. os.getenv 'HOME' .. '/.local/include', '$(FNAME)', '-o', 'Executables/$(FNOEXT)' } },
       },
       run_command = {
-        cpp = { exec = './$(FNOEXT)' },
+        cpp = { exec = './Executables/$(FNOEXT)' },
       },
       testcases_use_single_file = true,
+      testcases_directory = 'Testcases',
+      testcases_single_file_format = '$(FNOEXT).testcases',
 
       -- UI Settings
       runner_ui = {
@@ -31,10 +33,11 @@ return {
 
     -- Keyboard Shortcuts
     local keymap = vim.keymap.set
-    keymap('n', '<leader>tc', '<cmd>CompetiTest receive problem<cr>', { desc = 'Receive Problem' })
-    keymap('n', '<leader>tr', '<cmd>CompetiTest run<cr>', { desc = 'Run Tests' })
-    keymap('n', '<leader>ta', '<cmd>CompetiTest add_testcase<cr>', { desc = 'Add Testcase' })
-    keymap('n', '<leader>te', '<cmd>CompetiTest edit_testcase<cr>', { desc = 'Edit Testcase' })
-    keymap('n', '<leader>ts', '<cmd>CompetiTest submit<cr>', { desc = 'Submit Problem' })
+    local opts = { buffer = true, silent = true }
+    keymap('n', '<leader>tc', '<cmd>CompetiTest receive problem<cr>', { desc = 'Receive Problem', unpack(opts) })
+    keymap('n', '<leader>tr', '<cmd>CompetiTest run<cr>', { desc = 'Run Tests', unpack(opts) })
+    keymap('n', '<leader>ta', '<cmd>CompetiTest add_testcase<cr>', { desc = 'Add Testcase', unpack(opts) })
+    keymap('n', '<leader>te', '<cmd>CompetiTest edit_testcase<cr>', { desc = 'Edit Testcase', unpack(opts) })
+    keymap('n', '<leader>ts', '<cmd>CompetiTest submit<cr>', { desc = 'Submit Problem', unpack(opts) })
   end,
 }

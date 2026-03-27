@@ -3,14 +3,13 @@
 # Based on the official Catppuccin Latte theme
 [window]
 opacity = 1
-padding = { x = 8, y = 8 }
+padding = { x = 10, y = 10 }
 
 [font]
 size = 13.0
 
 [font.normal]
-family = "Hack Nerd Font"
-style = "Regular"
+family = "JetBrainsMono Nerd Font"
 
 [[mouse.bindings]]
 mouse = "Left"
@@ -20,6 +19,9 @@ command = { program = "open", args = [] }
 [general]
 import = ["~/.config/alacritty/themes/themes/kanagawa_wave.toml"]
 
+[bell]
+animation = "EaseOutExpo"
+duration = 0
 
 [env]
 TERM = "xterm-256color"

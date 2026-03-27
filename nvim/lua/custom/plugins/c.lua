@@ -149,6 +149,7 @@ return {
     ft = { 'c', 'cpp' },
     dependencies = {
       'nvim-lua/plenary.nvim',
+      'stevearc/overseer.nvim',
     },
     config = function()
       require('cmake-tools').setup {
@@ -164,17 +165,7 @@ return {
           type = 'codelldb',
           request = 'launch',
         },
-        cmake_executor = {
-          name = 'quickfix',
-          opts = {},
-          default_opts = {
-            quickfix = {
-              show = 'always',
-              position = 'belowright',
-              size = 10,
-            },
-          },
-        },
+        cmake_executor = { name = 'overseer', opts = {} },
         cmake_runner = {
           name = 'terminal',
           opts = {},
@@ -197,22 +188,6 @@ return {
       vim.keymap.set('n', '<leader>ct', ':CMakeRunTest<CR>', { desc = 'CMake: Run Tests' })
       vim.keymap.set('n', '<leader>cs', ':CMakeSelectBuildType<CR>', { desc = 'CMake: Select Build Type' })
     end,
-  },
-
-  -- Symbol outline
-  {
-    'hedyhli/outline.nvim',
-    cmd = { 'Outline', 'OutlineOpen' },
-    keys = {
-      { '<leader>o', '<cmd>Outline<CR>', desc = 'Toggle outline' },
-    },
-    opts = {
-      outline_window = {
-        position = 'right',
-        width = 25,
-        relative_width = false,
-      },
-    },
   },
 
   -- Comment generation
@@ -245,30 +220,4 @@ return {
     end,
   },
 
-  -- Google Test integration
-  {
-    'nvim-neotest/neotest',
-    ft = { 'c', 'cpp' },
-    dependencies = {
-      'nvim-lua/plenary.nvim',
-      'nvim-treesitter/nvim-treesitter',
-      'alfaix/neotest-gtest',
-    },
-    config = function()
-      require('neotest').setup {
-        adapters = {
-          require('neotest-gtest').setup {},
-        },
-      }
-      vim.keymap.set('n', '<leader>tt', function()
-        require('neotest').run.run()
-      end, { desc = 'Run nearest test' })
-      vim.keymap.set('n', '<leader>tf', function()
-        require('neotest').run.run(vim.fn.expand '%')
-      end, { desc = 'Run file tests' })
-      vim.keymap.set('n', '<leader>ts', function()
-        require('neotest').summary.toggle()
-      end, { desc = 'Toggle test summary' })
-    end,
-  },
 }
