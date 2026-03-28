@@ -6,10 +6,11 @@ Personal development environment with a unified Kanagawa Wave theme. Built for C
 
 | Tool | Purpose |
 |------|---------|
-| **Neovim** | Primary editor — lazy.nvim, LSP, DAP, treesitter |
+| **Neovim** | Primary editor — lazy.nvim, 43 plugins, LSP, DAP, treesitter |
 | **Tmux** | Terminal multiplexer with Kanagawa status bar |
-| **Bash** | Shell with history substring search, eza, git-delta |
+| **Bash** | Shell with oh-my-bash, history search, eza, bat, git-delta |
 | **Alacritty** | GPU-accelerated terminal |
+| **Starship** | Cross-shell prompt with git status, language context, cmd duration |
 
 ## Installation
 
@@ -20,7 +21,12 @@ chmod +x setup_config.sh
 ./setup_config.sh
 ```
 
-The script installs dependencies (Homebrew, Neovim, tmux, eza, git-delta, Rust, ripgrep, fzf, zoxide, JetBrains Mono Nerd Font), backs up existing configs, and symlinks everything into place.
+Or with make:
+```bash
+make install
+```
+
+The script installs all dependencies (Homebrew, Neovim, tmux, eza, bat, git-delta, Rust, ripgrep, fzf, zoxide, oh-my-bash, JetBrains Mono Nerd Font), backs up existing configs, and copies everything into place.
 
 ## Post-Installation
 
@@ -33,39 +39,51 @@ The script installs dependencies (Homebrew, Neovim, tmux, eza, git-delta, Rust, 
 ## Key Files
 
 ```
-bashrc                          # bash config (aliases, history, completions)
+bashrc                          # bash config (history, completions, functions)
+aliases                         # all shell aliases (sourced from bashrc)
 tmux.conf                       # tmux config
 alacritty.toml                  # terminal config
+starship.toml                   # prompt config
 nvim/                           # neovim config
   init.lua                      # options, keymaps, lazy bootstrap
-  lua/custom/plugins/           # one file per plugin
-GUIDE.md                        # complete nvim keybind reference
+  lua/custom/plugins/           # one file per plugin (43 total)
+GUIDE.md                        # complete keybind and plugin reference
 setup_config.sh                 # automated install script
 ```
 
-## Neovim Highlights
+## Shell
+
+- **eza** — `ls`, `ll`, `lt`, `la` with color and icons
+- **bat** — `cat` replacement with syntax highlighting
+- **zoxide** — `z <query>` to jump to any recently visited directory
+- **fzf** — `Ctrl+R` fuzzy history, `fv` fuzzy open in nvim, `fcd` fuzzy cd, `flog` fuzzy git log
+- **git-delta** — syntax-highlighted diffs for all git commands
+- **oh-my-bash** — sudo (double `Esc`), bashmarks (`s`/`g`), colored man pages
+- **starship** — fish-style paths, git status counts, language context, cmd duration
+
+## Neovim
 
 - **Languages**: C++ (clangd + DAP + CMake), Rust (rustaceanvim + clippy), Python (pyright + ruff)
 - **Navigation**: Flash, Harpoon, Telescope, Oil, Aerial
 - **Git**: Neogit + Diffview (full Magit-style workflow inside nvim)
-- **Editing**: nvim-surround, mini.ai, targets.vim, nvim-spider (subword motions), nvim-recorder (named macro slots)
+- **Editing**: nvim-surround, mini.ai, targets.vim, nvim-spider, nvim-recorder, treesj, SSR, inc-rename
 - **UI**: Kanagawa Wave, lualine, alpha-nvim dashboard, nvim-notify, indent-blankline, treesitter-context
 - **Sessions**: persistence.nvim — auto-saves and restores per-directory sessions
 - **Terminal**: toggleterm (`<leader>T`), project-local keymaps via `.nvim.lua`
 
 See [GUIDE.md](GUIDE.md) for the full keybind reference.
 
-## Tmux Keybinds
+## Tmux
 
 Prefix: `Ctrl-a`
 
 | Key | Action |
 |-----|--------|
 | `prefix + arrows` | Switch panes (repeatable) |
-| `prefix + hjkl` | Resize panes |
+| `prefix + hjkl` | Resize panes (prefix required each time) |
+| `Alt + Left/Right` | Switch windows |
 | `prefix + \|` | Split vertical |
 | `prefix + -` | Split horizontal |
-| `Alt + Left/Right` | Switch windows |
 
 ## Troubleshooting
 
@@ -75,4 +93,8 @@ Prefix: `Ctrl-a`
 
 **Nvim plugins missing** — run `:Lazy sync`.
 
-**Colors wrong in tmux** — ensure `$TERM` reports `xterm-256color` from your terminal emulator. The config sets `tmux-256color` + true color passthrough internally.
+**Python version showing in `~`** — check `pyenv version`. If a global is set: `pyenv global system` or `rm ~/.python-version`.
+
+**Colors wrong in tmux** — ensure `$TERM` reports `xterm-256color` from your terminal. The config sets `tmux-256color` + true color passthrough internally.
+
+**Shell is wrong** — run `echo $0` (not `$SHELL`) to check the actual running shell. If Alacritty opens the wrong shell, `alacritty.toml` has `terminal.shell` explicitly set to `/opt/homebrew/bin/bash`.

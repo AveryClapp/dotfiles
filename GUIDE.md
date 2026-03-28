@@ -1,6 +1,49 @@
-# Neovim Config Guide
+# Config Guide
 
-A C++/Rust/Python IDE built on lazy.nvim with Kanagawa Wave theme.
+A C++/Rust/Python development environment built on Neovim + Tmux + Bash with Kanagawa Wave theme.
+
+---
+
+## Shell
+
+### Aliases
+| Alias | Expands to |
+|-------|-----------|
+| `ls` / `ll` / `lt` / `la` | eza with color, icons, grouped dirs |
+| `v` / `vim` | nvim |
+| `ta` / `tn` / `tl` / `tk` | tmux attach/new/list/kill-session |
+| `gs` / `gd` / `ga` / `gc` / `gp` | git status/diff/add/commit/push |
+| `gl` | git log --oneline --graph --decorate |
+| `gco` / `gb` | git checkout / git branch |
+| `lg` | lazygit |
+| `..` / `...` / `....` | cd up 1/2/3 levels |
+
+### fzf Functions
+| Command | Action |
+|---------|--------|
+| `fcd` | Fuzzy cd into any directory |
+| `fv` | Fuzzy find file and open in nvim |
+| `fkill` | Fuzzy pick and kill a process |
+| `fbr` | Fuzzy git branch checkout |
+| `flog` | Fuzzy git log with diff preview |
+| `Ctrl+R` | Fuzzy search shell history |
+
+### zoxide
+`z <partial>` — jump to any recently visited directory by fuzzy match. Replaces `cd` for anything beyond one level.
+
+### bat
+`bat <file>` — syntax-highlighted file viewer. Automatically used as MANPAGER.
+
+### oh-my-bash plugins
+- **sudo** — double-tap `Esc` to prepend `sudo` to last command
+- **bashmarks** — `s name` to bookmark current dir, `g name` to jump to it, `l` to list all
+- **colored-man-pages** — man pages with syntax highlighting
+
+### Tab Completion
+- `TAB` — complete + show visible list of all matches
+- `Shift+TAB` — cycle forward through completions
+- Case-insensitive, `-` and `_` treated as equivalent
+- Arrow keys search history by typed prefix (not full history scroll)
 
 ---
 

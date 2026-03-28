@@ -53,13 +53,14 @@ export BAT_THEME="Catppuccin-mocha"
 if [[ -n "$BASH_VERSION" ]]; then
   bind 'set completion-ignore-case on'    # case-insensitive tab complete
   bind 'set completion-map-case on'       # treat - and _ as same
-  bind 'set show-all-if-ambiguous on'     # show options on first tab instead of bell
+  bind 'set show-all-if-ambiguous on'     # show list on first tab when ambiguous
+  bind 'set show-all-if-unmodified on'   # show list on repeated tab even if unchanged
   bind 'set colored-stats on'             # color file type in completion list
   bind 'set colored-completion-prefix on' # color the typed prefix in list
   bind 'set mark-symlinked-directories on'
-  bind 'set menu-complete-display-prefix on'
-  bind 'TAB:menu-complete'              # cycle through matches like zsh
-  bind '"\e[Z":menu-complete-backward'  # shift-tab to go backward
+  bind 'TAB:complete'                    # first tab: complete + show visible list
+  bind '"\e[Z":menu-complete'            # shift-tab: cycle forward through matches
+  bind '"\e[Z\e[Z":menu-complete-backward' # shift-tab x2: cycle backward
   bind '"\e[A":history-search-backward' # up arrow: search history by typed prefix
   bind '"\e[B":history-search-forward'  # down arrow: search history by typed prefix
 fi
