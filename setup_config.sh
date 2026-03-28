@@ -88,6 +88,7 @@ validate_source_files() {
     local missing_files=()
     local required_files=(
         "bashrc"
+        "aliases"
         "tmux.conf"
         "starship.toml"
         "alacritty.toml"
@@ -325,6 +326,18 @@ install_tpm() {
     print_success "TPM installed"
 }
 
+install_oh_my_bash() {
+    if [ -d "$HOME/.oh-my-bash" ]; then
+        print_info "Oh My Bash already installed, skipping..."
+        return
+    fi
+
+    print_info "Installing Oh My Bash..."
+    bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmybash/oh-my-bash/master/tools/install.sh)" --unattended 2>/dev/null || true
+    print_success "Oh My Bash installed to ~/.oh-my-bash"
+    print_warning "Add 'source ~/.oh-my-bash/oh-my-bash.sh' to your bashrc to enable it"
+}
+
 install_rust() {
     if command_exists cargo; then
         print_info "Rust already installed, skipping..."
@@ -429,6 +442,9 @@ copy_configs() {
     cp bashrc ~/.bashrc
     print_success "bashrc → ~/.bashrc"
 
+    cp aliases ~/.aliases
+    print_success "aliases → ~/.aliases"
+
     # Tmux (XDG location matches reload bind in tmux.conf)
     cp tmux.conf ~/.config/tmux/tmux.conf
     # Also symlink to ~/.tmux.conf so tmux finds it on older versions
@@ -485,9 +501,10 @@ main() {
     echo ""
     echo "This script will:"
     echo "  1. Back up existing configurations"
-    echo "  2. Install packages (tmux, nvim, eza, delta, fzf, bat, lazygit, ...)"
-    echo "  3. Install Rust toolchain"
-    echo "  4. Install fonts and TPM"
+    echo "  2. Install packages (tmux, nvim, eza, delta, fzf, bat, lazygit, zoxide, ...)"
+    echo "  3. Install Oh My Bash"
+    echo "  4. Install Rust toolchain"
+    echo "  5. Install fonts and TPM"
     echo "  5. Copy dotfiles to their destinations"
     echo "  6. Configure git to use delta"
     echo ""
@@ -506,6 +523,7 @@ main() {
     install_homebrew
     install_dependencies
     install_neovim
+    install_oh_my_bash
     install_rust
     install_fonts
     install_tpm

@@ -47,19 +47,25 @@ stashed    = "≡"
 
 # ── Language context (only shows in relevant project dirs) ────────────────────
 [rust]
-style  = "fg:#FF9E3B"                  # roninYellow
-format = "[$symbol$version]($style) "
-symbol = " "
+style            = "fg:#FF9E3B"        # roninYellow
+format           = "[$symbol$version]($style) "
+symbol           = " "
+detect_files     = ["Cargo.toml"]
 
 [python]
-style  = "fg:#76946A"                  # autumnGreen
-format = '[${symbol}(${version})(\($virtualenv\))]($style) '
-symbol = " "
+style            = "fg:#76946A"        # autumnGreen
+format           = '[${symbol}(${version})(\($virtualenv\))]($style) '
+symbol           = " "
+detect_files     = ["requirements.txt", "pyproject.toml", "setup.py", "setup.cfg", "Pipfile", ".python-version"]
+detect_extensions = ["py"]
+detect_folders   = [".venv", "venv", "__pycache__"]
 
 [c]
-style  = "fg:#7E9CD8"                  # crystalBlue
-format = "[$symbol]($style)"
-symbol = " "
+style             = "fg:#7E9CD8"       # crystalBlue
+format            = "[$symbol]($style)"
+symbol            = " "
+detect_files      = ["CMakeLists.txt", "compile_commands.json"]
+detect_extensions = ["c", "cpp", "h", "hpp"]
 
 # ── Right-aligned utility info ────────────────────────────────────────────────
 [fill]

@@ -19,6 +19,9 @@ command = { program = "open", args = [] }
 [general]
 import = ["~/.config/alacritty/themes/themes/kanagawa_wave.toml"]
 
+[terminal.shell]
+program = "/opt/homebrew/bin/bash"
+
 [bell]
 animation = "EaseOutExpo"
 duration = 0

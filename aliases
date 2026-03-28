@@ -1,0 +1,59 @@
+# ── Navigation ─────────────────────────────────────────────────────────────────
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# ── File listing (eza) ─────────────────────────────────────────────────────────
+alias ls='eza --color=always --group-directories-first --no-git'
+alias ll='eza -la --color=always --group-directories-first --no-git'
+alias lt='eza --tree --color=always --level=2 --no-git'
+alias la='eza -a --color=always --group-directories-first --no-git'
+
+# ── Better defaults ────────────────────────────────────────────────────────────
+alias cat='bat --paging=never'
+alias grep='grep --color=auto'
+alias cp='cp -i'
+alias mv='mv -i'
+alias mkdir='mkdir -p'
+alias df='df -h'
+alias du='du -sh'
+
+# ── Editors ────────────────────────────────────────────────────────────────────
+alias vim='nvim'
+alias v='nvim'
+
+# ── Tmux ───────────────────────────────────────────────────────────────────────
+alias ta='tmux attach -t'
+alias tn='tmux new -s'
+alias tl='tmux ls'
+alias tk='tmux kill-session -t'
+
+_ta_complete() {
+  local cur sessions
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  sessions=$(tmux list-sessions -F '#S' 2>/dev/null)
+  COMPREPLY=($(IFS=$'\n' compgen -W "$sessions" -- "" | grep -i "^$cur"))
+}
+_session_complete() {
+  local cur sessions
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  sessions=$(tmux list-sessions -F '#S' 2>/dev/null)
+  COMPREPLY=($(IFS=$'\n' compgen -W "$sessions" -- "" | grep -i "^$cur"))
+}
+complete -F _ta_complete ta
+complete -F _session_complete tk
+
+# ── Git ────────────────────────────────────────────────────────────────────────
+alias gs='git status'
+alias gd='git diff'
+alias gp='git push'
+alias gpf='git push --force'
+alias ga='git add'
+alias gc='git commit -m'
+alias gl='git log --oneline --graph --decorate'
+alias gco='git checkout'
+alias gb='git branch'
+
+# ── Tools ──────────────────────────────────────────────────────────────────────
+alias lg='lazygit'
+alias tasks='taskwarrior-tui'

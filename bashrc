@@ -49,15 +49,7 @@ export VISUAL=nvim
 # ── BAT ────────────────────────────────────────────────────────────────
 export BAT_THEME="Catppuccin-mocha"
 
-# ── Completion ─────────────────────────────────────────────────────────────────
-if [ -f /opt/homebrew/etc/profile.d/bash_completion.sh ]; then
-  source /opt/homebrew/etc/profile.d/bash_completion.sh
-fi
-
-if [ -f /usr/share/bash-completion/completions/git ]; then
-  . /usr/share/bash-completion/completions/git
-fi
-
+# ── Readline completion behaviour ─────────────────────────────────────────────
 if [[ -n "$BASH_VERSION" ]]; then
   bind 'set completion-ignore-case on'    # case-insensitive tab complete
   bind 'set completion-map-case on'       # treat - and _ as same
@@ -87,8 +79,44 @@ _cached_eval() {
   source "$cache"
 }
 
+# ── Oh My Bash ─────────────────────────────────────────────────────────────────
+# Must be sourced BEFORE starship so starship overrides PS1 last
+if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
+  export OSH="$HOME/.oh-my-bash"
+  OSH_THEME="font"           # minimal theme — starship takes over PS1
+  plugins=(
+    sudo
+    bashmarks
+    colored-man-pages
+  )
+  completions=(
+    git
+    tmux
+    ssh
+    brew
+    pip3
+    gh
+    makefile
+    conda
+  )
+  source "$OSH/oh-my-bash.sh"
+fi
+
 _cached_eval starship init bash
 _cached_eval zoxide init bash
+
+# Cargo/rustup completions (not in oh-my-bash, generated and cached)
+if command -v rustup &>/dev/null; then
+  _rust_cache="$HOME/.cache/bash_rustup_init.sh"
+  _rustup_bin="$(command -v rustup)"
+  if [[ ! -f "$_rust_cache" || "$_rustup_bin" -nt "$_rust_cache" ]]; then
+    mkdir -p "$HOME/.cache"
+    rustup completions bash        >  "$_rust_cache" 2>/dev/null
+    rustup completions bash cargo  >> "$_rust_cache" 2>/dev/null
+  fi
+  source "$_rust_cache"
+  unset _rust_cache _rustup_bin
+fi
 
 # fzf
 _fzf_cache="$HOME/.cache/bash_fzf_init.sh"
@@ -103,21 +131,7 @@ fi
 unset _fzf_cache _fzf_bin
 
 # ── Aliases ────────────────────────────────────────────────────────────────────
-alias vim='nvim'
-alias ta='tmux attach -t'
-alias lg='lazygit'
-alias tasks='taskwarrior-tui'
-
-alias gs='git status'
-alias gd='git diff'
-alias gp='git push'
-alias gpf='git push --force'
-alias ga='git add'
-alias gc='git commit -m'
-
-alias ls='eza --color=always --group-directories-first --no-git'
-alias ll='eza -la --color=always --group-directories-first --no-git'
-alias lt='eza --tree --color=always --level=2 --no-git'
+[ -f ~/.aliases ] && source ~/.aliases
 
 # ── Functions ──────────────────────────────────────────────────────────────────
 compile() {
@@ -212,3 +226,4 @@ conda() {
   unset __conda_setup
   conda "$@"
 }
+
