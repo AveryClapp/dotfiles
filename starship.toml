@@ -53,12 +53,7 @@ symbol           = " "
 detect_files     = ["Cargo.toml"]
 
 [python]
-style            = "fg:#76946A"        # autumnGreen
-format           = '[${symbol}(${version})(\($virtualenv\))]($style) '
-symbol           = " "
-detect_files     = ["requirements.txt", "pyproject.toml", "setup.py", "setup.cfg", "Pipfile", ".python-version"]
-detect_extensions = ["py"]
-detect_folders   = [".venv", "venv", "__pycache__"]
+disabled = true
 
 [c]
 style             = "fg:#7E9CD8"       # crystalBlue

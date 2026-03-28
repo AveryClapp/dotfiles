@@ -407,16 +407,111 @@ your_ft = { 'your_formatter' },
 
 ---
 
+## Philosophy & Priorities
+
+This setup makes deliberate choices. Understanding them helps you use it at full depth.
+
+### What this prioritizes
+
+**Keyboard permanence** — every operation has a keyboard path. Mouse is optional everywhere. The entire workflow from opening a file to pushing a commit can be done without leaving the home row.
+
+**Speed at scale** — different tools handle different scales of movement:
+- Character → `f`/`t`/Flash `s`
+- Word → nvim-spider `w`/`e`/`b`
+- Line → `H`/`L`, `J`/`K` (10-line jumps)
+- File → Harpoon `<leader>1-4`
+- Project → Telescope `<leader>ff`/`<leader>fg`
+- Directory → zoxide `z`
+
+**Composability over shortcuts** — rather than `<leader>dw` (delete word), the setup teaches you `dw`, `diw`, `daw`, `dt,` — primitives that compose. Every new motion you learn multiplies all operators you know.
+
+**C++ and Rust as first-class citizens** — clangd + CMake + DAP + codelldb for C++, rustaceanvim (not just lspconfig) for Rust. Both have full debug loops inside the editor.
+
+**Git inside the editor** — Neogit + Diffview + gitsigns means you never need a separate git GUI. Stage hunks, resolve conflicts, browse history — all without leaving nvim.
+
+**Minimal chrome** — fidget over a full LSP status bar, treesitter-context over always-visible breadcrumbs, notify over blocking messages. UI elements appear when relevant and disappear otherwise.
+
+---
+
+## Tool Synergies
+
+Understanding how tools interact unlocks workflows that no single tool provides alone.
+
+### Flash + operators
+`s` is not just a jump — it's the most powerful motion. Every operator composes with it:
+- `d<flash>` — delete to a distant target
+- `c<flash>` — change a distant word
+- `y<flash>` — yank from here to anywhere on screen
+- `ys<flash>"` — surround a distant target with quotes
+- `r` (operator mode) — operate on text anywhere without moving cursor at all
+
+### Harpoon + marks
+Two-layer spatial memory. Harpoon for files (persistent, up to 4), marks for positions inside files (26 slots per file, lost on close unless combined with `undofile`). Together: jump to the right file in one key, jump to the right line in one more.
+
+### Telescope + everything
+Telescope is the universal UI layer. It's not just file finding — LSP references (`gr`), diagnostics, git commits (`flog`), todo comments (`:TodoTelescope`), old files (`<leader>fr`), and open buffers (`<leader>fb`) all funnel through the same interface with the same keybinds.
+
+### treesj + SSR + inc-rename
+Structural refactoring stack:
+1. `gS`/`gJ` — reshape code structure (inline vs multiline)
+2. `<leader>sR` — find all instances of a structural pattern and replace them
+3. `<leader>rn` — rename a symbol everywhere with live preview
+
+These three together handle most refactors without a dedicated refactoring tool.
+
+### fzf (shell) + Telescope (nvim)
+Both use the same mental model — fuzzy type to filter. `fv` in the shell fuzzy-opens a file in nvim. Once in nvim, `<leader>ff` and `<leader>fg` continue the same pattern. The workflow is identical across shell and editor.
+
+### zoxide + Oil
+Two complementary navigation models. Zoxide (`z`) gets you to the right directory from anywhere based on frequency. Oil (`-`) gives you a filesystem buffer to navigate and edit structure once you're there. Together they replace `cd`/`ls`/`mv`/`mkdir` for most operations.
+
+### gitsigns + Neogit + Diffview
+Three git tools at three granularities:
+- gitsigns — per-line hunk info inline, `<leader>gp` to preview a single change
+- Neogit (`<leader>gg`) — stage/unstage/commit/push the full staging workflow
+- Diffview (`<leader>gd`/`<leader>gh`) — side-by-side diffs and file history
+
+### toggleterm + `.nvim.lua`
+Toggleterm gives you a persistent shell inside nvim. `.nvim.lua` gives you project-specific keymaps. Together: define `<leader>mc` to compile in the terminal, `<leader>mr` to run — different per project, no global config pollution.
+
+### DAP + Overseer
+DAP handles interactive debugging (breakpoints, step through, inspect state). Overseer handles build tasks (CMake configure/build/run). For C++ the loop is: Overseer builds → DAP launches the binary → you debug. Both panels stay open side by side.
+
+### Tmux + nvim focus-events
+`focus-events on` in tmux means nvim's `autoread` triggers when you switch panes. Files edited outside nvim (by a build tool, a script, a git operation) are automatically reloaded when you switch back. No manual `:e!` needed.
+
+---
+
+## Acknowledged Tradeoffs
+
+These are deliberate decisions with real costs. Not gaps — choices.
+
+**No AI completion** — copilot/codeium would slot into the existing cmp pipeline trivially. The choice not to include it is intentional: AI completion trains you to read suggestions instead of write code. It's a productivity tool and a skill-atrophy tool simultaneously. Add it when you want it; the infra is ready.
+
+**Mouse is de-prioritized** — mouse support is on in tmux and nvim, but the entire keymap assumes you won't use it. If you reach for the mouse you're slower, not faster.
+
+**Python DAP not configured** — pyright + ruff is solid but no step-through debugger for Python. `print()` and `pdb` are fast enough for most Python work. Add `nvim-dap-python` if you need it.
+
+**No snippet library beyond friendly-snippets** — LuaSnip is wired up and friendly-snippets is loaded. No custom snippets defined. Custom snippets have high ROI for repetitive patterns but require investment to write and maintain.
+
+**Bash over zsh** — zsh has better interactive features out of the box. Bash is the correct choice when your code runs on Linux servers (bash is universal, zsh is not). The readline config in this setup closes most of the gap.
+
+**Startup time** — 43 nvim plugins with lazy loading is fast but not instant. Everything is lazy-loaded by event/key/command. Cold start is ~80ms. If you need sub-10ms, remove plugins. The current set is calibrated for capability over raw startup speed.
+
+**Terminal inside nvim vs tmux panes** — toggleterm exists for quick one-off commands. For real terminal work (long-running processes, multiple shells), use tmux panes. Don't try to replace tmux with toggleterm.
+
+---
+
 ## Strengths
 
 - **C++ is first-class**: clangd with background indexing and clang-tidy, DAP debugging, CMake integration, header/source switching, doxygen generation, competitive programming workflow
 - **Rust is first-class**: rustaceanvim (not just lspconfig), clippy on save, runnables/debuggables as native commands
-- **Navigation is fast**: Flash + Harpoon + Telescope + Zoxide covers every scale of movement
-- **Text editing is deep**: three text object layers (mini.ai + targets + treesitter), subword motions, surround, enhanced macros
-- **Git without leaving nvim**: Neogit + Diffview covers everything lazygit does, from inside the editor
-- **Persistent undo**: `undofile` enabled — undotree works across sessions
+- **Navigation is fast**: Flash + Harpoon + Telescope + zoxide covers every scale of movement
+- **Text editing is deep**: three text object layers (mini.ai + targets + treesitter), subword motions, surround, enhanced macros, structural split/join, structural search/replace
+- **Git without leaving nvim**: Neogit + Diffview covers everything a git GUI does, from inside the editor
+- **Persistent everything**: undofile, persistence.nvim sessions, Harpoon marks — state survives restarts
 
 ## Weaknesses / Gaps
 
-- **Python is shallow** — pyright + ruff_format is solid but no DAP debugger configured for Python. Add `mfussenegger/nvim-dap-python` if needed
-- **No copilot/AI completion** — add `github/copilot.vim` or `zbirenbaum/copilot-cmp` to wire into the existing cmp setup
+- **Python is shallow** — pyright + ruff_format is solid but no DAP debugger configured. Add `mfussenegger/nvim-dap-python` if needed
+- **No AI completion** — intentional. Add `github/copilot.vim` or `zbirenbaum/copilot-cmp` when ready
