@@ -54,15 +54,15 @@ if [[ -n "$BASH_VERSION" ]]; then
   bind 'set completion-ignore-case on'    # case-insensitive tab complete
   bind 'set completion-map-case on'       # treat - and _ as same
   bind 'set show-all-if-ambiguous on'     # show list on first tab when ambiguous
-  bind 'set show-all-if-unmodified on'   # show list on repeated tab even if unchanged
+  bind 'set show-all-if-unmodified on'    # show list on repeated tab even if unchanged
   bind 'set colored-stats on'             # color file type in completion list
   bind 'set colored-completion-prefix on' # color the typed prefix in list
   bind 'set mark-symlinked-directories on'
-  bind 'TAB:complete'                    # first tab: complete + show visible list
-  bind '"\e[Z":menu-complete'            # shift-tab: cycle forward through matches
+  bind 'TAB:complete'                      # first tab: complete + show visible list
+  bind '"\e[Z":menu-complete'              # shift-tab: cycle forward through matches
   bind '"\e[Z\e[Z":menu-complete-backward' # shift-tab x2: cycle backward
-  bind '"\e[A":history-search-backward' # up arrow: search history by typed prefix
-  bind '"\e[B":history-search-forward'  # down arrow: search history by typed prefix
+  bind '"\e[A":history-search-backward'    # up arrow: search history by typed prefix
+  bind '"\e[B":history-search-forward'     # down arrow: search history by typed prefix
 fi
 
 # ── Cached init scripts ────────────────────────────────────────────────────────
@@ -84,7 +84,7 @@ _cached_eval() {
 # Must be sourced BEFORE starship so starship overrides PS1 last
 if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
   export OSH="$HOME/.oh-my-bash"
-  OSH_THEME="font"           # minimal theme — starship takes over PS1
+  OSH_THEME="font" # minimal theme — starship takes over PS1
   plugins=(
     sudo
     bashmarks
@@ -98,7 +98,6 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
     pip3
     gh
     makefile
-    conda
   )
   source "$OSH/oh-my-bash.sh"
 fi
@@ -106,14 +105,23 @@ fi
 _cached_eval starship init bash
 _cached_eval zoxide init bash
 
+# oh-my-bash adds _omb_util_prompt_command_hook to PROMPT_COMMAND after starship,
+# which clobbers PS1. Move starship_precmd to the end so it always wins.
+_tmp_cmds=()
+for _cmd in "${PROMPT_COMMAND[@]}"; do
+  [[ "$_cmd" != "starship_precmd" ]] && _tmp_cmds+=("$_cmd")
+done
+PROMPT_COMMAND=("${_tmp_cmds[@]}" "starship_precmd")
+unset _tmp_cmds _cmd
+
 # Cargo/rustup completions (not in oh-my-bash, generated and cached)
 if command -v rustup &>/dev/null; then
   _rust_cache="$HOME/.cache/bash_rustup_init.sh"
   _rustup_bin="$(command -v rustup)"
   if [[ ! -f "$_rust_cache" || "$_rustup_bin" -nt "$_rust_cache" ]]; then
     mkdir -p "$HOME/.cache"
-    rustup completions bash        >  "$_rust_cache" 2>/dev/null
-    rustup completions bash cargo  >> "$_rust_cache" 2>/dev/null
+    rustup completions bash >"$_rust_cache" 2>/dev/null
+    rustup completions bash cargo >>"$_rust_cache" 2>/dev/null
   fi
   source "$_rust_cache"
   unset _rust_cache _rustup_bin
@@ -141,7 +149,7 @@ compile() {
 }
 
 cmake_vim_configure() {
-  cp build/compile_commands.json .
+  ln -sf build/compile_commands.json compile_commands.json
 }
 
 cmake_create() {
@@ -227,4 +235,3 @@ conda() {
   unset __conda_setup
   conda "$@"
 }
-
