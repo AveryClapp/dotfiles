@@ -1,21 +1,83 @@
 "$schema" = 'https://starship.rs/config-schema.json'
+
 format = """
-$username$hostname\
-$directory\
-$git_branch\
-"""
+$directory$git_branch$git_status$rust$python$c$fill$jobs$cmd_duration$line_break$character"""
 
-[username]
-style_user = "fg:#C8C093"  # oldWhite - More neutral off-white
-format = "[$user]($style) "
-show_always = true
+# ── Disabled noise ────────────────────────────────────────────────────────────
+[aws]
+disabled = true
 
+[gcloud]
+disabled = true
+
+[package]
+disabled = true
+
+[nodejs]
+disabled = true
+
+# ── Directory ─────────────────────────────────────────────────────────────────
 [directory]
-style = "fg:#727169"  # fujiGray - Subtle gray instead of purple
-format = "[$path]($style) "
-truncation_length = 3
-truncation_symbol = "…/"
+style                     = "fg:#7FB4CA bold"   # springBlue
+format                    = "[$path]($style) "
+truncation_length         = 4
+truncation_symbol         = "…/"
+fish_style_pwd_dir_length = 1                   # ~/D/C/G/dotfiles style
+read_only                 = " 󰌾"
+read_only_style           = "fg:#E82424"
 
+# ── Git ───────────────────────────────────────────────────────────────────────
 [git_branch]
-style = "fg:#C34043"  # autumnRed - Muted red instead of bright red
-format = "[$branch]($style) "
+style  = "fg:#938AA9"                  # springViolet1
+format = "[$symbol$branch]($style)"
+symbol = " "
+
+[git_status]
+style      = "fg:#DCA561"             # autumnYellow
+format     = '([ $all_status$ahead_behind]($style) )'
+conflicted = "!"
+ahead      = "⇡${count}"
+behind     = "⇣${count}"
+diverged   = "⇕⇡${ahead_count}⇣${behind_count}"
+modified   = "~${count}"
+staged     = "+${count}"
+untracked  = "?${count}"
+deleted    = "✘${count}"
+stashed    = "≡"
+
+# ── Language context (only shows in relevant project dirs) ────────────────────
+[rust]
+style  = "fg:#FF9E3B"                  # roninYellow
+format = "[$symbol$version]($style) "
+symbol = " "
+
+[python]
+style  = "fg:#76946A"                  # autumnGreen
+format = '[${symbol}(${version})(\($virtualenv\))]($style) '
+symbol = " "
+
+[c]
+style  = "fg:#7E9CD8"                  # crystalBlue
+format = "[$symbol]($style)"
+symbol = " "
+
+# ── Right-aligned utility info ────────────────────────────────────────────────
+[fill]
+symbol = " "
+
+[jobs]
+style            = "fg:#727169"        # fujiGray
+format           = "[$symbol$number]($style)"
+symbol           = "⚙"
+number_threshold = 1
+
+[cmd_duration]
+style             = "fg:#727169"       # fujiGray
+format            = "[ $duration]($style)"
+min_time          = 2000
+show_milliseconds = false
+
+# ── Prompt character (green = ok, red = error) ────────────────────────────────
+[character]
+success_symbol = "[❯](fg:#76946A bold)"   # autumnGreen
+error_symbol   = "[❯](fg:#E82424 bold)"   # samuraiRed
