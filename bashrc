@@ -7,6 +7,7 @@ export MANPATH="/opt/homebrew/share/man${MANPATH+:$MANPATH}:"
 export INFOPATH="/opt/homebrew/share/info:${INFOPATH:-}"
 
 # ── PATH ───────────────────────────────────────────────────────────────────────
+export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/opt/llvm/bin:$PATH"
 export PATH="~/Documents/Coding/GitProjects/Claude-Code/Fallback:$PATH"
 export PATH="$PATH:/Users/averyclapp/.moose/bin"
@@ -91,7 +92,6 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
   )
   completions=(
     git
-    tmux
     ssh
     brew
     pip3
@@ -102,6 +102,7 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
 fi
 
 _cached_eval zoxide init bash
+_cached_eval direnv hook bash
 
 # ── Prompt ─────────────────────────────────────────────────────────────────────
 # Fish-style path: ~/D/C/G/dotfiles (no subprocess)
@@ -115,10 +116,10 @@ _prompt_path() {
   printf '%s' "${result}${parts[-1]}"
 }
 
-# Git branch via direct .git/HEAD read — no subprocess
+# Git branch via direct .git/HEAD read (no subprocess)
 _prompt_git() {
   local dir="$PWD" head
-  while [[ "$dir" != / ]]; do
+  while [[ -n "$dir" && "$dir" != / ]]; do
     if [[ -r "$dir/.git/HEAD" ]]; then
       read -r head < "$dir/.git/HEAD"
       [[ "$head" == ref:* ]] && printf '  %s' "${head##*/heads/}"
@@ -141,6 +142,7 @@ _set_ps1() {
 
 # Ensure _set_ps1 runs last so oh-my-bash hooks don't clobber PS1
 _tmp_cmds=()
+PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_set_ps1"
 for _cmd in "${PROMPT_COMMAND[@]}"; do
   [[ "$_cmd" != "_set_ps1" ]] && _tmp_cmds+=("$_cmd")
 done
@@ -171,6 +173,24 @@ if [[ -n "$_fzf_bin" ]]; then
   source "$_fzf_cache"
 fi
 unset _fzf_cache _fzf_bin
+
+# ── SSH Agent ──────────────────────────────────────────────────────────────────
+# Start once, reuse socket across all terminals
+_ssh_env="$HOME/.ssh/agent.env"
+_start_agent() {
+  ssh-agent | sed 's/^echo/#echo/' > "$_ssh_env"
+  chmod 600 "$_ssh_env"
+  source "$_ssh_env" > /dev/null
+  ssh-add ~/.ssh/id_rsa 2>/dev/null
+}
+if [[ -f "$_ssh_env" ]]; then
+  source "$_ssh_env" > /dev/null
+  ssh-add -l &>/dev/null || _start_agent
+else
+  _start_agent
+fi
+unset _ssh_env
+unset -f _start_agent
 
 # ── Aliases ────────────────────────────────────────────────────────────────────
 [ -f ~/.aliases ] && source ~/.aliases

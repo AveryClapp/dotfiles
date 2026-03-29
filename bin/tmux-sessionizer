@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Fuzzy-find a project dir and create/switch to a dedicated tmux session.
+# Bind to prefix+f in tmux.conf.
+
+selected=$(find \
+    ~/Documents/Coding/GitProjects \
+    ~/Documents/Coding \
+    -mindepth 1 -maxdepth 1 -type d \
+    2>/dev/null | sort -u | fzf --prompt="session: " --height=40%)
+
+[[ -z "$selected" ]] && exit 0
+
+session=$(basename "$selected" | tr '[:upper:]' '[:lower:]' | tr ' .' '_')
+
+if ! tmux has-session -t="$session" 2>/dev/null; then
+    tmux new-session -ds "$session" -c "$selected"
+fi
+
+if [[ -z "$TMUX" ]]; then
+    tmux attach-session -t "$session"
+else
+    tmux switch-client -t "$session"
+fi
