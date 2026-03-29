@@ -39,11 +39,49 @@ A C++/Rust/Python development environment built on Neovim + Tmux + Bash with Kan
 - **bashmarks** — `s name` to bookmark current dir, `g name` to jump to it, `l` to list all
 - **colored-man-pages** — man pages with syntax highlighting
 
+### direnv
+Drop a `.envrc` in any project directory and it auto-loads when you `cd` in, unloads when you leave:
+```bash
+# .envrc
+export DATABASE_URL=postgres://localhost/mydb
+export API_KEY=dev-key-123
+export PATH="$PWD/scripts:$PATH"
+layout python   # activate .venv automatically
+```
+Run `direnv allow` once to trust a new `.envrc`. After that it's automatic.
+
+### ssh-agent
+Agent starts once on first terminal open and persists via `~/.ssh/agent.env`. Every subsequent terminal reuses the same socket — enter your passphrase once per reboot, never again mid-session.
+
 ### Tab Completion
 - `TAB` — complete + show visible list of all matches
 - `Shift+TAB` — cycle forward through completions
 - Case-insensitive, `-` and `_` treated as equivalent
 - Arrow keys search history by typed prefix (not full history scroll)
+
+---
+
+## Tmux
+
+### Sessionizer
+`prefix+f` — fuzzy-find any project under `~/Documents/Coding` and jump to a dedicated tmux session for it. If the session doesn't exist it's created with the working directory set to the project root. If it does exist you switch to it instantly.
+
+Each project gets its own session, so you can have `pulse`, `dotfiles`, and `onyx` all running simultaneously with their own windows, panes, and history. Switch between them in one keypress.
+
+### Session Persistence (tmux-resurrect)
+| Key | Action |
+|-----|--------|
+| `prefix + Ctrl+s` | Save all sessions, windows, and panes to disk |
+| `prefix + Ctrl+r` | Restore everything after a reboot |
+
+Save before shutting down. Restore after booting. Your entire tmux layout comes back exactly as you left it.
+
+### Pane Management
+| Key | Action |
+|-----|--------|
+| `prefix + arrows` | Switch panes (hold prefix, spam arrows) |
+| `prefix + hjkl` | Enter resize mode — spam hjkl freely, `Esc` to exit |
+| `Alt + Left/Right` | Switch windows |
 
 ---
 

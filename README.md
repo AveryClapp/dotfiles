@@ -10,7 +10,6 @@ Personal development environment with a unified Kanagawa Wave theme. Built for C
 | **Tmux** | Terminal multiplexer with Kanagawa status bar |
 | **Bash** | Shell with oh-my-bash, history search, eza, bat, git-delta |
 | **Alacritty** | GPU-accelerated terminal |
-| **Starship** | Cross-shell prompt with git status, language context, cmd duration |
 
 ## Installation
 
@@ -26,11 +25,11 @@ Or with make:
 make install
 ```
 
-The script installs all dependencies (Homebrew, Neovim, tmux, eza, bat, git-delta, Rust, ripgrep, fzf, zoxide, oh-my-bash, JetBrains Mono Nerd Font), backs up existing configs, and copies everything into place.
+The script installs all dependencies (Homebrew, Neovim, tmux, eza, bat, git-delta, Rust, ripgrep, fzf, zoxide, direnv, oh-my-bash, JetBrains Mono Nerd Font), backs up existing configs, and copies everything into place.
 
 ## Post-Installation
 
-**Tmux** — press `Ctrl-a + I` inside tmux to install plugins via TPM.
+**Tmux** — press `Ctrl-a + I` inside tmux to install plugins via TPM (includes tmux-resurrect).
 
 **Neovim** — open `nvim`, lazy.nvim installs all plugins automatically. Then run `:Mason` to verify LSP servers.
 
@@ -41,8 +40,10 @@ The script installs all dependencies (Homebrew, Neovim, tmux, eza, bat, git-delt
 ```
 bashrc                          # bash config (history, completions, functions)
 aliases                         # all shell aliases (sourced from bashrc)
+gitconfig                       # git quality-of-life settings
 tmux.conf                       # tmux config
 alacritty.toml                  # terminal config
+bin/tmux-sessionizer            # project session switcher (prefix+f)
 nvim/                           # neovim config
   init.lua                      # options, keymaps, lazy bootstrap
   lua/custom/plugins/           # one file per plugin (43 total)
@@ -59,6 +60,8 @@ setup_config.sh                 # automated install script
 - **git-delta** — syntax-highlighted diffs for all git commands
 - **oh-my-bash** — sudo (double `Esc`), bashmarks (`s`/`g`), colored man pages
 - **pure-bash prompt** — fish-style paths, git branch via `.git/HEAD` read, zero subprocess cost
+- **direnv** — auto-loads `.envrc` on `cd`, unloads on `cd` away
+- **ssh-agent** — persistent agent shared across all terminals via `~/.ssh/agent.env`
 
 ## Neovim
 
@@ -78,11 +81,12 @@ Prefix: `Ctrl-a`
 
 | Key | Action |
 |-----|--------|
+| `prefix + f` | Sessionizer — fuzzy-find project, create/switch session |
 | `prefix + arrows` | Switch panes (repeatable) |
-| `prefix + hjkl` | Resize panes (prefix required each time) |
+| `prefix + hjkl` | Resize panes (enter resize mode, spam freely, Esc to exit) |
 | `Alt + Left/Right` | Switch windows |
-| `prefix + \|` | Split vertical |
-| `prefix + -` | Split horizontal |
+| `prefix + Ctrl+s` | Save tmux session (resurrect) |
+| `prefix + Ctrl+r` | Restore tmux session (resurrect) |
 
 ## Troubleshooting
 
