@@ -37,7 +37,7 @@ if [[ -n "$BASH_VERSION" ]]; then
     shopt -s globstar # enable ** recursive glob
   fi
 fi
-PROMPT_COMMAND="history -a; history -c; history -r${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+PROMPT_COMMAND="history -a${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
 
 # --- MANPAGER ------------------------------------------------------------------
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
@@ -81,10 +81,9 @@ _cached_eval() {
 }
 
 # ── Oh My Bash ─────────────────────────────────────────────────────────────────
-# Must be sourced BEFORE starship so starship overrides PS1 last
 if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
   export OSH="$HOME/.oh-my-bash"
-  OSH_THEME="font" # minimal theme — starship takes over PS1
+  OSH_THEME=""  # no theme — we set PS1 ourselves
   plugins=(
     sudo
     bashmarks
@@ -102,16 +101,50 @@ if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
   source "$OSH/oh-my-bash.sh"
 fi
 
-_cached_eval starship init bash
 _cached_eval zoxide init bash
 
-# oh-my-bash adds _omb_util_prompt_command_hook to PROMPT_COMMAND after starship,
-# which clobbers PS1. Move starship_precmd to the end so it always wins.
+# ── Prompt ─────────────────────────────────────────────────────────────────────
+# Fish-style path: ~/D/C/G/dotfiles (no subprocess)
+_prompt_path() {
+  local path="$PWD" parts=() result="" i
+  [[ "$path" == "$HOME"* ]] && path="~${path:${#HOME}}"
+  IFS='/' read -ra parts <<< "$path"
+  for ((i=0; i<${#parts[@]}-1; i++)); do
+    [[ -n "${parts[i]}" ]] && result+="${parts[i]:0:1}/"
+  done
+  printf '%s' "${result}${parts[-1]}"
+}
+
+# Git branch via direct .git/HEAD read — no subprocess
+_prompt_git() {
+  local dir="$PWD" head
+  while [[ "$dir" != / ]]; do
+    if [[ -r "$dir/.git/HEAD" ]]; then
+      read -r head < "$dir/.git/HEAD"
+      [[ "$head" == ref:* ]] && printf '  %s' "${head##*/heads/}"
+      return
+    fi
+    dir="${dir%/*}"
+  done
+}
+
+_set_ps1() {
+  local e=$?
+  local blue='\[\e[38;2;127;180;202m\]'    # springBlue
+  local violet='\[\e[38;2;147;138;169m\]'  # springViolet1
+  local green='\[\e[1;38;2;118;148;106m\]' # autumnGreen
+  local red='\[\e[1;38;2;232;36;36m\]'     # samuraiRed
+  local reset='\[\e[0m\]'
+  local char_color; [[ $e -eq 0 ]] && char_color="$green" || char_color="$red"
+  PS1="${blue}$(_prompt_path)${reset}${violet}$(_prompt_git)${reset}\n${char_color}❯${reset} "
+}
+
+# Ensure _set_ps1 runs last so oh-my-bash hooks don't clobber PS1
 _tmp_cmds=()
 for _cmd in "${PROMPT_COMMAND[@]}"; do
-  [[ "$_cmd" != "starship_precmd" ]] && _tmp_cmds+=("$_cmd")
+  [[ "$_cmd" != "_set_ps1" ]] && _tmp_cmds+=("$_cmd")
 done
-PROMPT_COMMAND=("${_tmp_cmds[@]}" "starship_precmd")
+PROMPT_COMMAND=("${_tmp_cmds[@]}" "_set_ps1")
 unset _tmp_cmds _cmd
 
 # Cargo/rustup completions (not in oh-my-bash, generated and cached)

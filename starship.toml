@@ -1,7 +1,9 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
+command_timeout = 100  # ms — abort slow git/tool checks
+
 format = """
-$directory$git_branch$git_status$rust$python$c$fill$jobs$cmd_duration$line_break$character"""
+$directory$git_branch$rust$python$c$fill$jobs$line_break$character"""
 
 # ── Disabled noise ────────────────────────────────────────────────────────────
 [aws]
@@ -33,17 +35,7 @@ format = "[$symbol$branch]($style)"
 symbol = " "
 
 [git_status]
-style      = "fg:#DCA561"             # autumnYellow
-format     = '([ $all_status$ahead_behind]($style) )'
-conflicted = "!"
-ahead      = "⇡${count}"
-behind     = "⇣${count}"
-diverged   = "⇕⇡${ahead_count}⇣${behind_count}"
-modified   = "~${count}"
-staged     = "+${count}"
-untracked  = "?${count}"
-deleted    = "✘${count}"
-stashed    = "≡"
+disabled = true
 
 # ── Language context (only shows in relevant project dirs) ────────────────────
 [rust]
@@ -73,10 +65,7 @@ symbol           = "⚙"
 number_threshold = 1
 
 [cmd_duration]
-style             = "fg:#727169"       # fujiGray
-format            = "[ $duration]($style)"
-min_time          = 2000
-show_milliseconds = false
+disabled = true
 
 # ── Prompt character (green = ok, red = error) ────────────────────────────────
 [character]
