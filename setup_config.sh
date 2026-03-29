@@ -90,7 +90,6 @@ validate_source_files() {
         "bashrc"
         "aliases"
         "tmux.conf"
-        "starship.toml"
         "alacritty.toml"
     )
 
@@ -147,7 +146,7 @@ install_dependencies() {
         brew install \
             tmux git ripgrep fd unzip make gcc curl wget \
             task taskwarrior-tui zoxide fzf bat lazygit \
-            eza git-delta starship bash
+            eza git-delta bash
 
     elif [[ "$OS" == "linux" ]]; then
         if command_exists apt-get; then
@@ -182,11 +181,6 @@ install_dependencies() {
                 curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
             fi
 
-            # starship
-            if ! command_exists starship; then
-                curl -sS https://starship.rs/install.sh | sh -s -- -y
-            fi
-
             # lazygit
             if ! command_exists lazygit; then
                 print_warning "lazygit not in apt — install from https://github.com/jesseduffield/lazygit"
@@ -202,9 +196,6 @@ install_dependencies() {
                 tmux git ripgrep fd-find unzip make gcc curl wget \
                 xclip fontconfig task fzf bat zoxide eza git-delta bash
 
-            if ! command_exists starship; then
-                curl -sS https://starship.rs/install.sh | sh -s -- -y
-            fi
             if ! command_exists lazygit; then
                 print_warning "lazygit not in dnf — install from https://github.com/jesseduffield/lazygit"
             fi
@@ -226,9 +217,6 @@ install_dependencies() {
             if ! command_exists zoxide; then
                 curl -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
             fi
-            if ! command_exists starship; then
-                curl -sS https://starship.rs/install.sh | sh -s -- -y
-            fi
             print_warning "eza/git-delta/lazygit not in yum — install manually"
 
         elif command_exists pacman; then
@@ -236,9 +224,6 @@ install_dependencies() {
                 tmux git ripgrep fd unzip make gcc curl wget \
                 xclip fontconfig task fzf bat zoxide lazygit eza git-delta bash
 
-            if ! command_exists starship; then
-                curl -sS https://starship.rs/install.sh | sh -s -- -y
-            fi
             if ! command_exists taskwarrior-tui; then
                 print_warning "taskwarrior-tui — install via AUR or cargo"
             fi
@@ -411,7 +396,6 @@ backup_configs() {
         "$HOME/.tmux.conf"
         "$HOME/.config/tmux"
         "$HOME/.config/nvim"
-        "$HOME/.config/starship.toml"
         "$HOME/.config/alacritty"
         "$HOME/.config/taskwarrior-tui"
         "$HOME/.config/clangd"
@@ -450,10 +434,6 @@ copy_configs() {
     # Also symlink to ~/.tmux.conf so tmux finds it on older versions
     ln -sf ~/.config/tmux/tmux.conf ~/.tmux.conf
     print_success "tmux.conf → ~/.config/tmux/tmux.conf (+ ~/.tmux.conf symlink)"
-
-    # Starship
-    cp starship.toml ~/.config/starship.toml
-    print_success "starship.toml → ~/.config/starship.toml"
 
     # Alacritty
     cp alacritty.toml ~/.config/alacritty/alacritty.toml

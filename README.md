@@ -43,7 +43,6 @@ bashrc                          # bash config (history, completions, functions)
 aliases                         # all shell aliases (sourced from bashrc)
 tmux.conf                       # tmux config
 alacritty.toml                  # terminal config
-starship.toml                   # prompt config
 nvim/                           # neovim config
   init.lua                      # options, keymaps, lazy bootstrap
   lua/custom/plugins/           # one file per plugin (43 total)
@@ -59,7 +58,7 @@ setup_config.sh                 # automated install script
 - **fzf** — `Ctrl+R` fuzzy history, `fv` fuzzy open in nvim, `fcd` fuzzy cd, `flog` fuzzy git log
 - **git-delta** — syntax-highlighted diffs for all git commands
 - **oh-my-bash** — sudo (double `Esc`), bashmarks (`s`/`g`), colored man pages
-- **starship** — fish-style paths, git status counts, language context, cmd duration
+- **pure-bash prompt** — fish-style paths, git branch via `.git/HEAD` read, zero subprocess cost
 
 ## Neovim
 
