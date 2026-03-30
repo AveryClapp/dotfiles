@@ -44,6 +44,7 @@ gitconfig                       # git quality-of-life settings
 tmux.conf                       # tmux config
 alacritty.toml                  # terminal config
 bin/tmux-sessionizer            # project session switcher (prefix+f)
+bin/tmux-worktree               # git worktree + session switcher (prefix+w)
 nvim/                           # neovim config
   init.lua                      # options, keymaps, lazy bootstrap
   lua/custom/plugins/           # one file per plugin (43 total)
@@ -62,6 +63,10 @@ setup_config.sh                 # automated install script
 - **pure-bash prompt** — fish-style paths, git branch via `.git/HEAD` read, zero subprocess cost
 - **direnv** — auto-loads `.envrc` on `cd`, unloads on `cd` away
 - **ssh-agent** — persistent agent shared across all terminals via `~/.ssh/agent.env`
+- **entr** — run any command when files change (`git ls-files | entr -c make`)
+- **btop** — system monitor (`top` alias)
+- **hyperfine** — statistical benchmarking (`bench` alias)
+- **tldr** — practical man pages with real examples (`help` alias)
 
 ## Neovim
 
@@ -82,6 +87,7 @@ Prefix: `Ctrl-a`
 | Key | Action |
 |-----|--------|
 | `prefix + f` | Sessionizer — fuzzy-find project, create/switch session |
+| `prefix + w` | Worktree — pick branch, create worktree + session |
 | `prefix + arrows` | Switch panes (repeatable) |
 | `prefix + hjkl` | Resize panes (enter resize mode, spam freely, Esc to exit) |
 | `Alt + Left/Right` | Switch windows |

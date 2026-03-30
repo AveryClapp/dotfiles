@@ -39,6 +39,42 @@ A C++/Rust/Python development environment built on Neovim + Tmux + Bash with Kan
 - **bashmarks** — `s name` to bookmark current dir, `g name` to jump to it, `l` to list all
 - **colored-man-pages** — man pages with syntax highlighting
 
+### entr — file watcher
+Pipe a list of files into `entr` and it re-runs a command whenever any of them change. Uses `git ls-files` to watch only tracked files:
+
+```bash
+watch-make          # git ls-files | entr -c make
+watch-cargo         # git ls-files | entr -c cargo run
+watch-test          # git ls-files | entr -c cargo test
+```
+
+Custom usage:
+```bash
+git ls-files | entr -c ./my_binary        # re-run binary on any change
+ls *.py      | entr -c python main.py     # Python
+echo main.cpp | entr -c 'make && ./sol'   # watch a single file
+```
+`-c` clears the screen before each run. `entr` exits cleanly with `Ctrl+C`.
+
+### btop
+`top` — full system monitor. CPU, memory, processes, network, disk IO in one view. Better than htop.
+
+### hyperfine
+`bench <command>` — statistical benchmarking with warmup runs, min/max/mean, and outlier detection.
+```bash
+bench './my_binary'
+bench --warmup 5 './my_binary arg1'
+bench 'make' 'ninja'    # compare two build systems
+```
+
+### tldr
+`help <command>` — practical examples instead of full man pages.
+```bash
+help git rebase
+help rsync
+help entr
+```
+
 ### direnv
 Drop a `.envrc` in any project directory and it auto-loads when you `cd` in, unloads when you leave:
 ```bash
@@ -67,6 +103,22 @@ Agent starts once on first terminal open and persists via `~/.ssh/agent.env`. Ev
 `prefix+f` — fuzzy-find any project under `~/Documents/Coding` and jump to a dedicated tmux session for it. If the session doesn't exist it's created with the working directory set to the project root. If it does exist you switch to it instantly.
 
 Each project gets its own session, so you can have `pulse`, `dotfiles`, and `onyx` all running simultaneously with their own windows, panes, and history. Switch between them in one keypress.
+
+### Worktree Sessionizer
+`prefix+w` — pick a branch from the current repo, get a dedicated tmux session and git worktree for it at `~/worktrees/<repo>-<branch>`. Type a new branch name to create it.
+
+The key insight: your `main` session keeps running untouched. The worktree is a full separate checkout — different directory, own session, own nvim, own build artifacts. No stashing, no branch switching mid-thought.
+
+```
+Working on pulse/main when a hotfix is needed:
+  prefix+w → type "hotfix/auth" → enter
+  → ~/worktrees/pulse-hotfix-auth created
+  → new tmux session "pulse-hotfix-auth" opened
+  → fix the bug, push
+  prefix+f → pulse → back to feature work, nothing disturbed
+```
+
+Clean up when done: `git worktree remove ~/worktrees/<name>`
 
 ### Session Persistence (tmux-resurrect)
 | Key | Action |
