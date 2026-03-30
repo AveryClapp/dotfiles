@@ -48,7 +48,7 @@ export EDITOR=nvim
 export VISUAL=nvim
 
 # ── BAT ────────────────────────────────────────────────────────────────
-export BAT_THEME="Catppuccin-mocha"
+export BAT_THEME="Catppuccin Mocha"
 
 # ── Readline completion behaviour ─────────────────────────────────────────────
 if [[ -n "$BASH_VERSION" ]]; then
