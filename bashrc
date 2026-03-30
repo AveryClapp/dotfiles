@@ -140,14 +140,7 @@ _set_ps1() {
   PS1="${blue}$(_prompt_path)${reset}${violet}$(_prompt_git)${reset}\n${char_color}❯${reset} "
 }
 
-# Ensure _set_ps1 runs last so oh-my-bash hooks don't clobber PS1
-_tmp_cmds=()
 PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_set_ps1"
-for _cmd in "${PROMPT_COMMAND[@]}"; do
-  [[ "$_cmd" != "_set_ps1" ]] && _tmp_cmds+=("$_cmd")
-done
-PROMPT_COMMAND=("${_tmp_cmds[@]}" "_set_ps1")
-unset _tmp_cmds _cmd
 
 # Cargo/rustup completions (not in oh-my-bash, generated and cached)
 if command -v rustup &>/dev/null; then

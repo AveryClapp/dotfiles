@@ -27,6 +27,5 @@ lint:
 check:
 	@echo "Validating configs..."
 	@bash -n bashrc && bash -n aliases && bash -n setup_config.sh
-	@python3 -c "import tomllib; tomllib.load(open('starship.toml','rb'))" 2>/dev/null && echo "  starship.toml OK" || echo "  starship.toml WARN (python3 <3.11 has no tomllib)"
 	@python3 -c "import tomllib; tomllib.load(open('alacritty.toml','rb'))" 2>/dev/null && echo "  alacritty.toml OK" || true
 	@echo "All checks passed"
