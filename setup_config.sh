@@ -146,7 +146,7 @@ install_dependencies() {
         brew install \
             tmux git ripgrep fd unzip make gcc curl wget \
             task taskwarrior-tui zoxide fzf bat lazygit \
-            eza git-delta direnv bash
+            eza git-delta direnv entr tldr btop hyperfine bash
 
     elif [[ "$OS" == "linux" ]]; then
         if command_exists apt-get; then
@@ -439,11 +439,13 @@ copy_configs() {
     cp gitconfig ~/.gitconfig
     print_success "gitconfig → ~/.gitconfig"
 
-    # Sessionizer
+    # Scripts
     mkdir -p ~/.local/bin
     cp bin/tmux-sessionizer ~/.local/bin/tmux-sessionizer
     chmod +x ~/.local/bin/tmux-sessionizer
-    print_success "bin/tmux-sessionizer → ~/.local/bin/tmux-sessionizer"
+    cp bin/tmux-worktree ~/.local/bin/tmux-worktree
+    chmod +x ~/.local/bin/tmux-worktree
+    print_success "bin/ → ~/.local/bin/"
 
     # Alacritty
     cp alacritty.toml ~/.config/alacritty/alacritty.toml

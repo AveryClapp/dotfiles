@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Create or switch to a git worktree + dedicated tmux session.
+# Run from anywhere inside a git repo. Bind to prefix+w in tmux.conf.
+
+root=$(git rev-parse --show-toplevel 2>/dev/null)
+if [[ -z "$root" ]]; then
+    tmux display-message "Not in a git repo"
+    exit 1
+fi
+
+repo=$(basename "$root")
+
+# Pick from existing branches or type a new one
+branch=$(git branch -a --format='%(refname:short)' \
+    | sed 's|origin/||' | sort -u \
+    | fzf --prompt="worktree branch: " --height=40% \
+          --header="Enter new branch name to create it")
+[[ -z "$branch" ]] && exit 0
+
+safe=$(echo "$branch" | tr '/' '-')
+worktree_path="$HOME/worktrees/${repo}-${safe}"
+session="${repo}-${safe}"
+
+# Create worktree if it doesn't exist
+if [[ ! -d "$worktree_path" ]]; then
+    mkdir -p "$HOME/worktrees"
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+        git worktree add "$worktree_path" "$branch"
+    else
+        git worktree add -b "$branch" "$worktree_path"
+    fi
+fi
+
+# Create or switch session
+if ! tmux has-session -t="$session" 2>/dev/null; then
+    tmux new-session -ds "$session" -c "$worktree_path"
+fi
+
+if [[ -z "$TMUX" ]]; then
+    tmux attach-session -t "$session"
+else
+    tmux switch-client -t "$session"
+fi
