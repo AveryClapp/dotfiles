@@ -146,7 +146,7 @@ install_dependencies() {
         brew install \
             tmux git ripgrep fd unzip make gcc curl wget \
             task taskwarrior-tui zoxide fzf bat lazygit \
-            eza git-delta direnv entr tldr btop hyperfine bash
+            eza git-delta direnv entr tldr btop hyperfine bash ruff
 
     elif [[ "$OS" == "linux" ]]; then
         if command_exists apt-get; then
@@ -232,6 +232,11 @@ install_dependencies() {
             print_error "Unsupported package manager"
             exit 1
         fi
+    fi
+
+    # ruff (Python formatter used by Neovim conform.nvim)
+    if ! command_exists ruff; then
+        pip3 install --user ruff 2>/dev/null || print_warning "Could not install ruff via pip3, install manually"
     fi
 
     print_success "Dependencies installed"
