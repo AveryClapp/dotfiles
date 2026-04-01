@@ -146,7 +146,7 @@ install_dependencies() {
         brew install \
             tmux git ripgrep fd unzip make gcc curl wget \
             task taskwarrior-tui zoxide fzf bat lazygit \
-            eza git-delta direnv entr tldr btop hyperfine bash ruff
+            eza git-delta direnv entr tldr btop hyperfine bash ruff cppman
 
     elif [[ "$OS" == "linux" ]]; then
         if command_exists apt-get; then
