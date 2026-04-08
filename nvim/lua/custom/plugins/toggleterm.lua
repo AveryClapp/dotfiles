@@ -7,6 +7,7 @@ return {
     require('toggleterm').setup {
       size = 15,
       open_mapping = '<leader>T',
+      insert_mappings = false,
       direction = 'horizontal',
       shade_terminals = false,
     }
