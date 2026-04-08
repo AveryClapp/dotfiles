@@ -81,25 +81,31 @@ _cached_eval() {
   source "$cache"
 }
 
-# ── Oh My Bash ─────────────────────────────────────────────────────────────────
-if [ -f "$HOME/.oh-my-bash/oh-my-bash.sh" ]; then
-  export OSH="$HOME/.oh-my-bash"
-  OSH_THEME=""  # no theme — we set PS1 ourselves
-  plugins=(
-    sudo
-    bashmarks
-    colored-man-pages
-  )
-  completions=(
-    git
-    ssh
-    brew
-    pip3
-    gh
-    makefile
-  )
-  source "$OSH/oh-my-bash.sh"
-fi
+# ── Completions (cached / direct — replaces oh-my-bash) ───────────────────────
+# git — try brew bash-completion, then CLT fallback (static source, no fork)
+for _p in \
+  "$HOMEBREW_PREFIX/share/bash-completion/completions/git" \
+  "/Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash"; do
+  [[ -f "$_p" ]] && { source "$_p"; break; }
+done
+unset _p
+
+# brew / gh / pip3 — run once, cache; invalidate when binary updates
+_cached_eval brew completion bash
+_cached_eval gh   completion -s bash
+_cached_eval pip3 completion --bash
+
+# ── Sudo plugin: double-ESC to prepend/strip sudo ─────────────────────────────
+_sudo_cmd() {
+  [[ -z $READLINE_LINE ]] && READLINE_LINE=$(fc -ln -1)
+  if [[ $READLINE_LINE == sudo\ * ]]; then
+    READLINE_LINE="${READLINE_LINE#sudo }"
+  else
+    READLINE_LINE="sudo $READLINE_LINE"
+  fi
+  READLINE_POINT=${#READLINE_LINE}
+}
+bind -x '"\e\e": _sudo_cmd'
 
 _cached_eval zoxide init bash
 _cached_eval direnv hook bash
