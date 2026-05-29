@@ -86,13 +86,16 @@ _cached_eval() {
 for _p in \
   "$HOMEBREW_PREFIX/share/bash-completion/completions/git" \
   "/Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash"; do
-  [[ -f "$_p" ]] && { source "$_p"; break; }
+  [[ -f "$_p" ]] && {
+    source "$_p"
+    break
+  }
 done
 unset _p
 
 # brew / gh / pip3 — run once, cache; invalidate when binary updates
 _cached_eval brew completion bash
-_cached_eval gh   completion -s bash
+_cached_eval gh completion -s bash
 _cached_eval pip3 completion --bash
 
 # ── Sudo plugin: double-ESC to prepend/strip sudo ─────────────────────────────
@@ -115,8 +118,8 @@ _cached_eval direnv hook bash
 _prompt_path() {
   local path="$PWD" parts=() result="" i
   [[ "$path" == "$HOME"* ]] && path="~${path:${#HOME}}"
-  IFS='/' read -ra parts <<< "$path"
-  for ((i=0; i<${#parts[@]}-1; i++)); do
+  IFS='/' read -ra parts <<<"$path"
+  for ((i = 0; i < ${#parts[@]} - 1; i++)); do
     [[ -n "${parts[i]}" ]] && result+="${parts[i]:0:1}/"
   done
   printf '%s' "${result}${parts[-1]}"
@@ -127,7 +130,7 @@ _prompt_git() {
   local dir="$PWD" head
   while [[ -n "$dir" && "$dir" != / ]]; do
     if [[ -r "$dir/.git/HEAD" ]]; then
-      read -r head < "$dir/.git/HEAD"
+      read -r head <"$dir/.git/HEAD"
       [[ "$head" == ref:* ]] && printf '  %s' "${head##*/heads/}"
       return
     fi
@@ -142,7 +145,8 @@ _set_ps1() {
   local green='\[\e[1;38;2;118;148;106m\]' # autumnGreen
   local red='\[\e[1;38;2;232;36;36m\]'     # samuraiRed
   local reset='\[\e[0m\]'
-  local char_color; [[ $e -eq 0 ]] && char_color="$green" || char_color="$red"
+  local char_color
+  [[ $e -eq 0 ]] && char_color="$green" || char_color="$red"
   PS1="${blue}$(_prompt_path)${reset}${violet}$(_prompt_git)${reset}\n${char_color}❯${reset} "
 }
 
@@ -173,17 +177,17 @@ if [[ -n "$_fzf_bin" ]]; then
 fi
 unset _fzf_cache _fzf_bin
 
-# ── SSH Agent ──────────────────────────────────────────────────────────────────
+# ── SSH Agent ───────────────────────────────────────���──────────────────────────
 # Start once, reuse socket across all terminals
 _ssh_env="$HOME/.ssh/agent.env"
 _start_agent() {
-  ssh-agent | sed 's/^echo/#echo/' > "$_ssh_env"
+  ssh-agent | sed 's/^echo/#echo/' >"$_ssh_env"
   chmod 600 "$_ssh_env"
-  source "$_ssh_env" > /dev/null
+  source "$_ssh_env" >/dev/null
   ssh-add ~/.ssh/id_rsa 2>/dev/null
 }
 if [[ -f "$_ssh_env" ]]; then
-  source "$_ssh_env" > /dev/null
+  source "$_ssh_env" >/dev/null
   ssh-add -l &>/dev/null || _start_agent
 else
   _start_agent
@@ -287,3 +291,11 @@ conda() {
   unset __conda_setup
   conda "$@"
 }
+
+# BEGIN opam configuration
+# This is useful if you're using opam as it adds:
+#   - the correct directories to the PATH
+#   - auto-completion for the opam binary
+# This section can be safely removed at any time if needed.
+test -r '/Users/averyclapp/.opam/opam-init/init.sh' && . '/Users/averyclapp/.opam/opam-init/init.sh' >/dev/null 2>/dev/null || true
+# END opam configuration
