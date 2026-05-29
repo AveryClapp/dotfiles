@@ -59,7 +59,9 @@ alias tasks='taskwarrior-tui'
 alias top='btop'
 alias bench='hyperfine'
 alias help='tldr'
-
+kill_port() {
+  kill -9 $(lsof -t -i:"$1")
+}
 # ── entr watch shortcuts ───────────────────────────────────────────────────────
 alias watch-make='git ls-files | entr -c make'
 alias watch-cargo='git ls-files | entr -c cargo run'
