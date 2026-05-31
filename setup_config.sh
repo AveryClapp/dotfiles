@@ -6,6 +6,7 @@
 # This script automates the setup of a development environment including:
 # - Package dependencies (tmux, git, ripgrep, fd, eza, delta, etc.)
 # - Neovim with configuration
+# - Doom Emacs with configuration (+ launchd daemon on macOS)
 # - Starship prompt
 # - Tmux with TPM (Tmux Plugin Manager)
 # - JetBrains Mono Nerd Font
@@ -99,7 +100,7 @@ validate_source_files() {
         fi
     done
 
-    local required_dirs=("nvim" "taskwarrior-tui")
+    local required_dirs=("nvim" "taskwarrior-tui" "doom")
     for dir in "${required_dirs[@]}"; do
         if [ ! -d "$dir" ]; then
             missing_files+=("$dir/")
@@ -280,6 +281,80 @@ install_neovim_appimage() {
     print_success "Neovim AppImage installed to $nvim_dir/nvim"
 }
 
+install_emacs() {
+    if command_exists emacs; then
+        print_info "Emacs already installed, skipping..."
+        return
+    fi
+
+    print_info "Installing Emacs..."
+    if [[ "$OS" == "macos" ]]; then
+        # emacs-plus puts emacs/emacsclient on PATH (the Doom-recommended macOS build)
+        brew tap d12frosted/emacs-plus
+        if brew install emacs-plus --with-native-comp; then
+            ln -sf "$(brew --prefix)/opt/emacs-plus/Emacs.app" /Applications/ 2>/dev/null || true
+        else
+            print_warning "emacs-plus failed; falling back to cask emacs"
+            brew install --cask emacs
+        fi
+    elif [[ "$OS" == "linux" ]]; then
+        if command_exists apt-get; then sudo apt-get install -y emacs
+        elif command_exists dnf;    then sudo dnf install -y emacs
+        elif command_exists yum;    then sudo yum install -y emacs || print_warning "Install emacs manually"
+        elif command_exists pacman; then sudo pacman -S --noconfirm emacs
+        fi
+    fi
+    print_success "Emacs installed"
+}
+
+install_doom() {
+    if [ -d "$HOME/.config/emacs/.git" ]; then
+        print_info "Doom Emacs already installed, skipping clone..."
+        return
+    fi
+
+    print_info "Cloning Doom Emacs framework..."
+    git clone --depth 1 https://github.com/doomemacs/doomemacs ~/.config/emacs
+    print_success "Doom framework cloned (config symlinked + synced later)"
+}
+
+# Build Doom's packages against our symlinked config. Run AFTER copy_configs.
+sync_doom() {
+    if [ ! -x "$HOME/.config/emacs/bin/doom" ]; then
+        print_warning "Doom not installed; skipping doom sync"
+        return
+    fi
+    print_info "Syncing Doom packages (this can take a few minutes)..."
+    "$HOME/.config/emacs/bin/doom" sync || print_warning "doom sync had issues — run 'doom doctor'"
+    "$HOME/.config/emacs/bin/doom" env >/dev/null 2>&1 || true
+    print_success "Doom packages synced"
+}
+
+# Install the launchd agent so the Emacs daemon starts at login (macOS only).
+install_emacs_daemon() {
+    if [[ "$OS" != "macos" ]]; then
+        print_info "Emacs daemon autostart (launchd) is macOS-only; skipping on $OS"
+        return
+    fi
+    if [ ! -f "launchd/com.averyclapp.emacs.plist" ]; then
+        print_warning "launchd plist not found; skipping daemon autostart"
+        return
+    fi
+
+    print_info "Installing Emacs daemon launchd agent..."
+    mkdir -p ~/Library/LaunchAgents
+    local plist=~/Library/LaunchAgents/com.averyclapp.emacs.plist
+    local emacs_bin
+    emacs_bin=$(command -v emacs || echo /opt/homebrew/bin/emacs)
+    # Rewrite the baked-in paths to this machine's $HOME and emacs binary
+    sed -e "s|/Users/averyclapp|$HOME|g" \
+        -e "s|/opt/homebrew/bin/emacs|$emacs_bin|g" \
+        launchd/com.averyclapp.emacs.plist > "$plist"
+    launchctl unload "$plist" 2>/dev/null || true
+    launchctl load -w "$plist"
+    print_success "Emacs daemon will start at login — use 'e' / 'et' to open frames"
+}
+
 install_fonts() {
     print_info "Installing JetBrains Mono Nerd Font..."
 
@@ -401,6 +476,7 @@ backup_configs() {
         "$HOME/.tmux.conf"
         "$HOME/.config/tmux"
         "$HOME/.config/nvim"
+        "$HOME/.config/doom"
         "$HOME/.config/alacritty"
         "$HOME/.config/taskwarrior-tui"
         "$HOME/.config/clangd"
@@ -463,6 +539,13 @@ copy_configs() {
         print_success "nvim/ → ~/.config/nvim/"
     fi
 
+    # Doom Emacs (symlink, so the repo stays the single source of truth)
+    if [ -d "doom" ]; then
+        rm -rf ~/.config/doom
+        ln -sfn "$(pwd)/doom" ~/.config/doom
+        print_success "doom/ → ~/.config/doom (symlink)"
+    fi
+
     # Clangd
     if [ -d "clangd" ]; then
         mkdir -p ~/.config/clangd
@@ -498,7 +581,8 @@ main() {
     echo ""
     echo "This script will:"
     echo "  1. Back up existing configurations"
-    echo "  2. Install packages (tmux, nvim, eza, delta, fzf, bat, lazygit, zoxide, ...)"
+    echo "  2. Install packages (tmux, nvim, emacs, eza, delta, fzf, bat, lazygit, zoxide, ...)"
+    echo "  3. Install Doom Emacs + start its daemon at login (macOS)"
     echo "  3. Install Oh My Bash"
     echo "  4. Install Rust toolchain"
     echo "  5. Install fonts and TPM"
@@ -520,12 +604,16 @@ main() {
     install_homebrew
     install_dependencies
     install_neovim
+    install_emacs
+    install_doom
     install_oh_my_bash
     install_rust
     install_fonts
     install_tpm
 
     copy_configs
+    sync_doom
+    install_emacs_daemon
     configure_git_delta
     configure_bash_default
 
@@ -541,6 +629,7 @@ main() {
     echo "  2. Open tmux → prefix + I to install plugins"
     echo "  3. Open nvim → plugins install automatically via lazy.nvim"
     echo "  4. In nvim run :Lazy sync to ensure everything is up to date"
+    echo "  5. Run 'e' (GUI) or 'et' (terminal) → Doom Emacs, packages already synced"
     echo ""
 
     if [[ "$OS" == "linux" ]]; then

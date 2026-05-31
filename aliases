@@ -21,6 +21,12 @@ alias du='du -sh'
 alias vim='nvim'
 alias v='nvim'
 
+# Emacs — talk to the always-on daemon (launchd: com.averyclapp.emacs).
+# -a '' autostarts a daemon if one isn't running, as a fallback.
+alias e="emacsclient -c -n -a ''"   # GUI frame, returns to shell immediately
+alias et="emacsclient -t -a ''"     # terminal frame in this pane (blocks like an editor)
+alias ekill="emacsclient -e '(kill-emacs)'"  # stop the daemon (launchd will restart it)
+
 # ── Tmux ───────────────────────────────────────────────────────────────────────
 alias ta='tmux attach -t'
 alias tn='tmux new -s'

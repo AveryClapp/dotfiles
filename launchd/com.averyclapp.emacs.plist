@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.averyclapp.emacs</string>
+
+  <!-- --fg-daemon (not --bg-daemon) so launchd supervises the process directly -->
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/bin/emacs</string>
+    <string>--fg-daemon</string>
+  </array>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <!-- launchd starts with a bare env; give the daemon a real PATH so LSP servers,
+       formatters, cargo, etc. are found the same as in your shell. -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/opt/homebrew/sbin:/Users/averyclapp/.cargo/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/emacs-daemon.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/emacs-daemon.log</string>
+</dict>
+</plist>
