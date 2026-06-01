@@ -12,5 +12,7 @@
 (package! topsy)               ; treesitter-context analog (sticky function header)
 (package! consult-flycheck)    ; feeds diagnostics into the trouble-style list
 (package! cmake-mode)          ; CMakeLists syntax
+(package! gendoxy              ; neogen analog: signature-aware doxygen generation (SPC n c)
+  :recipe (:host github :repo "mp81ss/gendoxy"))
 (package! combobulate           ; treesitter structural nav (approximates treesj/SSR jump)
   :recipe (:host github :repo "mickeynp/combobulate"))

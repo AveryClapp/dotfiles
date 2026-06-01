@@ -56,21 +56,22 @@ format-on-save, LSP for all five languages, corfu+yasnippet (cmp+LuaSnip).
 | Sessions `SPC q*` | `doom/quickload-session` + workspaces | per-workspace, not strictly per-directory |
 | DAP / CMake / Rust runnables | dap-mode, compile wrappers, rustic | more manual than your nvim setup |
 | neotest `SPC tt/tf/ts` | rustic-cargo-test / ctest dispatch | no unified summary panel |
+| neogen doxygen `SPC nc` | gendoxy `gendoxy-tag` | signature-aware @brief/@param/@return; C-focused, C++ ok |
 
 ## What can't be done cleanly (Tier 3) — FLAGGED
 
 1. **SSR — structural search/replace (`SPC sR`)** — no treesitter SSR in Emacs.
    Bound to a message. Closest options: `combobulate` (structural *editing*) or the
    external `comby` tool shelled out.
-2. **treesj split/join (`gS`/`gJ`/`gM`)** — no clean toggle. combobulate manipulates
-   nodes but doesn't give the one-key inline↔multiline flip. **Not bound.**
+2. **treesj split/join (`gS`/`gJ`/`gM`)** — no clean toggle, and (verified 2026) no
+   packaged equivalent exists. The closest is meain's custom `tree-surgeon-split-join`
+   elisp (Go/Rust/JSON only, lives in his dotfiles, not on MELPA). Not worth vendoring
+   fragile code. **Not bound.**
 3. **nvim-recorder extras** — native evil macros cover record/play, but named slots,
    `##` breakpoints, and edit-as-text are not ported.
 4. **Competitive submit (`SPC tS`)** — `cp-submit` only opens the problem URL.
    Programmatic Codeforces submission needs auth/automation, out of scope for a config.
-5. **neogen signature-aware doxygen (`SPC nc`)** — `+my/doxygen-skeleton` inserts a
-   blank `/** */` block; it does not parse the function signature.
-6. **nvim-notify popups** — Emacs uses the minibuffer/echo area. Cosmetic only.
+5. **nvim-notify popups** — Emacs uses the minibuffer/echo area. Cosmetic only.
 
 ## Binding overrides you should know about
 

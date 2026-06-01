@@ -126,7 +126,7 @@
       ;; header-switch moved from `h h` -> `c h`: SPC h is harpoon menu (a command),
       ;; and Emacs can't bind a command and a prefix on the same key (README).
       :desc "Header/source"     "c h" #'ff-find-other-file        ; native
-      :desc "Doxygen (basic)"   "n c" #'+my/doxygen-skeleton
+      :desc "Doxygen doc"       "n c" #'gendoxy-tag               ; signature-aware (neogen analog)
 
       ;; -- Rust (rustic) -----------------------------------------------------
       :desc "Cargo run"         "r r" #'rustic-cargo-run
@@ -211,10 +211,10 @@
   (interactive)
   (call-interactively #'dap-debug))
 
-(defun +my/doxygen-skeleton ()
-  "Insert a minimal doxygen block. (Full neogen signature-aware gen not ported.)"
-  (interactive)
-  (insert "/**\n * @brief \n *\n */\n"))
+;; neogen analog: gendoxy parses the function signature and emits a full
+;; @brief/@param/@return doxygen block.  `:commands` autoloads it for SPC n c.
+(use-package! gendoxy
+  :commands (gendoxy-tag gendoxy-header))
 
 ;;; ---------------------------------------------------------------------------
 ;;; Test dispatch  (neotest analog -- no unified panel; per-language)
