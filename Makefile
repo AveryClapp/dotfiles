@@ -12,6 +12,7 @@ install:
 
 update:
 	@git pull
+	@bash update.sh
 	@nvim --headless "+Lazy! sync" +qa 2>/dev/null && echo "Nvim plugins updated" || echo "Open nvim and run :Lazy sync manually"
 	@[ -x ~/.config/emacs/bin/doom ] && ~/.config/emacs/bin/doom sync && echo "Doom packages synced" || echo "Doom not installed; skipping doom sync"
 
