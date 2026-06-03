@@ -3,6 +3,9 @@
 ;; Goal: exact-parity keybindings. Where Doom's default binding differs, it is
 ;; OVERRIDDEN. Overrides that sacrifice a Doom default are noted inline and in README.
 
+;; Fixed socket path so emacsclient always finds the daemon regardless of $TMPDIR.
+(setq server-socket-dir (expand-file-name "~/.emacs.d/server"))
+
 ;;; ---------------------------------------------------------------------------
 ;;; Identity / theme / fonts  (init.lua options + colorscheme.lua)
 ;;; ---------------------------------------------------------------------------

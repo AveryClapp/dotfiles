@@ -10,6 +10,7 @@ alias lt='eza --tree --color=always --level=2 --no-git'
 alias la='eza -a --color=always --group-directories-first --no-git'
 
 # ── Better defaults ────────────────────────────────────────────────────────────
+alias claude='claude --dangerously-skip-permissions'
 alias grep='grep --color=auto'
 alias cp='cp -i'
 alias mv='mv -i'
@@ -22,9 +23,10 @@ alias vim='nvim'
 alias v='nvim'
 
 # Emacs — talk to the always-on daemon (launchd: com.averyclapp.emacs).
-# -a '' autostarts a daemon if one isn't running, as a fallback.
-alias e="emacsclient -c -n -a ''"   # GUI frame, returns to shell immediately
-alias et="emacsclient -t -a ''"     # terminal frame in this pane (blocks like an editor)
+# Socket is pinned to ~/.emacs.d/server/server (set via server-socket-dir in config.el)
+# so emacsclient always finds it regardless of $TMPDIR differences between launchd and shell.
+alias e='emacsclient -c -n -s ~/.emacs.d/server/server -a ""'
+alias et='emacsclient -t -s ~/.emacs.d/server/server -a ""'
 alias ekill="emacsclient -e '(kill-emacs)'"  # stop the daemon (launchd will restart it)
 
 # ── Tmux ───────────────────────────────────────────────────────────────────────
