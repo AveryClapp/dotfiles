@@ -1,23 +1,55 @@
 #!/usr/bin/env bash
-# Fuzzy-find a project dir and create/switch to a dedicated tmux session.
+# Switch between active tmux sessions, or create a new one from a project dir.
 # Bind to prefix+f in tmux.conf.
+#   default view : pick an active session (Enter switches to it)
+#   ctrl-f       : search project dirs to create/switch a new session
 
-selected=$(find \
-    ~/Documents/Coding/GitProjects \
-    ~/Documents/Coding \
-    -mindepth 1 -maxdepth 1 -type d \
-    2>/dev/null | sort -u | fzf --prompt="session: " --height=40%)
+switch_to() {
+    if [[ -z "$TMUX" ]]; then
+        tmux attach-session -t "$1"
+    else
+        tmux switch-client -t "$1"
+    fi
+}
 
-[[ -z "$selected" ]] && exit 0
+new_from_dir() {
+    local selected session
+    selected=$(find \
+        ~/Documents/Coding/GitProjects \
+        ~/Documents/Coding \
+        -mindepth 1 -maxdepth 1 -type d \
+        2>/dev/null | sort -u | fzf --prompt="new session: " --height=40%)
 
-session=$(basename "$selected" | tr '[:upper:]' '[:lower:]' | tr ' .' '_')
+    [[ -z "$selected" ]] && exit 0
 
-if ! tmux has-session -t="$session" 2>/dev/null; then
-    tmux new-session -ds "$session" -c "$selected"
+    session=$(basename "$selected" | tr '[:upper:]' '[:lower:]' | tr ' .' '_')
+
+    if ! tmux has-session -t="$session" 2>/dev/null; then
+        tmux new-session -ds "$session" -c "$selected"
+    fi
+
+    switch_to "$session"
+}
+
+sessions=$(tmux list-sessions -F '#S' 2>/dev/null)
+
+# No sessions yet: skip straight to creating one.
+if [[ -z "$sessions" ]]; then
+    new_from_dir
+    exit 0
 fi
 
-if [[ -z "$TMUX" ]]; then
-    tmux attach-session -t "$session"
-else
-    tmux switch-client -t "$session"
+result=$(printf '%s\n' "$sessions" | fzf \
+    --prompt="session: " \
+    --height=40% \
+    --header="ctrl-f: new from dir" \
+    --expect=ctrl-f)
+
+key=$(head -1 <<< "$result")
+selected=$(sed -n 2p <<< "$result")
+
+if [[ "$key" == "ctrl-f" ]]; then
+    new_from_dir
+elif [[ -n "$selected" ]]; then
+    switch_to "$selected"
 fi
