@@ -25,7 +25,7 @@ check_required() {
 
 printf 'Agent environment doctor\n\n'
 for command_name in \
-  git tmux fzf jq workmux bd dcg mise just ast-grep gitleaks lefthook cass \
+  git tmux fzf jq agent workmux bd dcg mise just ast-grep gitleaks lefthook cass \
   pyright-langserver typescript-language-server lua-language-server; do
   check_required "$command_name"
 done

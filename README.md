@@ -48,6 +48,12 @@ not remove Alacritty or the manual worktree/sessionizer workflow. See
 [docs/agentic-engineering.md](docs/agentic-engineering.md) for the architecture,
 commands, and operating protocol.
 
+In initialized projects, Beads is the central control plane for Claude and
+Codex. Tasks, discovered bugs, dependencies, follow-ups, and child-agent work all
+receive Bead IDs; workmux and Agent Mail use those IDs for execution and
+coordination. Run `agent init` in new or existing repositories; rerunning it
+refreshes managed integration blocks while preserving project-specific guidance.
+
 Agent profiles install the portable `general` skill pack by default. Add
 `--skill-pack web`, `security`, or `research` as needed; the option is
 repeatable, and `all` selects every pack. `--skill-pack none` keeps only the
@@ -72,7 +78,7 @@ The script installs dependencies based on the selected profile, backs up existin
 
 **Shell** — `source ~/.bashrc` or open a new terminal.
 
-**Agent profile** — run `agent-doctor` and `just check`. Both should complete
+**Agent profile** — run `agent doctor` and `just check`. Both should complete
 without warnings before the first agent task.
 
 ## Syncing Existing Machines
@@ -114,7 +120,7 @@ alacritty.toml                  # terminal config
 bin/tmux-sessionizer            # project session switcher (prefix+f)
 bin/tmux-worktree               # git worktree + session switcher (prefix+w)
 bin/dotfiles-doctor             # shell, Git, architecture, and config checks
-bin/agent-*                     # initialize, launch, inspect, review, and land agents
+bin/agent, bin/agent-*          # agent dispatcher plus workflow commands
 agent/                          # workmux defaults and global agent guidance
 ghostty/                        # optional agent-workstation terminal config
 .mise.toml                      # pinned repository development tools

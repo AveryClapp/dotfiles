@@ -23,6 +23,39 @@ Options:
 EOF
 }
 
+install_beads_policy() {
+  local file="$1" tmp
+  [[ -f "$file" ]] || return
+  tmp="$(mktemp "${TMPDIR:-/tmp}/agent-init-policy.XXXXXX")"
+  awk '
+    /<!-- BEGIN DOTFILES BEADS CONTROL PLANE -->/ { skip = 1; next }
+    /<!-- END DOTFILES BEADS CONTROL PLANE -->/ { skip = 0; next }
+    !skip { lines[++count] = $0 }
+    END {
+      while (count > 0 && lines[count] == "") count--
+      for (i = 1; i <= count; i++) print lines[i]
+    }
+  ' "$file" >"$tmp"
+  [[ ! -s "$tmp" ]] || printf '\n\n' >>"$tmp"
+  cat >>"$tmp" <<'EOF'
+<!-- BEGIN DOTFILES BEADS CONTROL PLANE -->
+## Beads Control Plane
+
+When `.beads/` exists, Beads is the authoritative tracker for all tasks, bugs,
+dependencies, follow-ups, and durable project memory.
+
+- Run `bd prime`, then create or claim a Bead before substantial work.
+- Immediately create a bug Bead for every discovered defect with
+  `bd create "Bug: <title>" -t bug`. Add
+  `--deps discovered-from:<current-id>` when another Bead led to the discovery.
+- Create child Beads before dispatching independent agents.
+- Do not maintain a competing markdown or agent-local task list.
+<!-- END DOTFILES BEADS CONTROL PLANE -->
+EOF
+  cat "$tmp" >"$file"
+  rm -f "$tmp"
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --stealth) STEALTH=1 ;;
@@ -78,6 +111,11 @@ if [[ "$SKIP_BEADS" -eq 0 ]]; then
   fi
 
   if [[ ! -d .beads ]]; then
+    if [[ "$STEALTH" -eq 0 && -n "$(git status --porcelain)" ]]; then
+      printf 'error: first Beads initialization requires a clean worktree because bd may create an initialization commit\n' >&2
+      printf 'commit or stash current changes, or use agent init --stealth for local-only Beads state\n' >&2
+      exit 1
+    fi
     init_args=(init --skip-agents --skip-hooks)
     [[ "$STEALTH" -eq 1 ]] && init_args+=(--stealth)
     bd "${init_args[@]}"
@@ -87,8 +125,14 @@ if [[ "$SKIP_BEADS" -eq 0 ]]; then
     if [[ "$BEADS_GIT_HOOKS" -eq 1 ]]; then
       bd hooks install
     fi
-    command -v codex >/dev/null 2>&1 && bd setup codex
-    command -v claude >/dev/null 2>&1 && bd setup claude
+    if command -v codex >/dev/null 2>&1; then
+      bd setup codex
+      install_beads_policy AGENTS.md
+    fi
+    if command -v claude >/dev/null 2>&1; then
+      bd setup claude
+      install_beads_policy CLAUDE.md
+    fi
   fi
 fi
 

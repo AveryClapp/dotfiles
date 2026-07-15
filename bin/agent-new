@@ -116,13 +116,13 @@ if [[ -z "$HANDLE" && "$AUTO_NAME" -eq 0 ]]; then
   }
 fi
 
-if [[ "$HANDLE" == bd-* && -d "$REPO_ROOT/.beads" ]]; then
-  bd show "$HANDLE" >/dev/null
+if [[ -d "$REPO_ROOT/.beads" ]] && bd show "$HANDLE" >/dev/null 2>&1; then
   bd update "$HANDLE" --claim
   if [[ "$PROMPT_SUPPLIED" -eq 0 ]]; then
-    PROMPT="Work on Beads task $HANDLE. Run bd prime and bd show $HANDLE first. Satisfy its acceptance criteria, run relevant checks, record durable discoveries with bd remember, and do not merge or push."
+    PROMPT="Work on Beads task $HANDLE. Run bd prime and bd show $HANDLE first. Satisfy its acceptance criteria and run relevant checks."
     PROMPT_SUPPLIED=1
   fi
+  PROMPT+=" Beads is the authoritative control plane. Immediately create a bug Bead for every discovered defect with --deps discovered-from:$HANDLE, even if you will fix it now. Record all follow-ups as Beads and durable knowledge with bd remember. Create child Beads before dispatching independent agents. Do not merge or push."
 fi
 
 args=(add)

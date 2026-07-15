@@ -210,7 +210,7 @@ main() {
   sync_executable "$DOTFILES_DIR/bin/tmux-worktree" "$HOME/.local/bin/tmux-worktree"
   sync_executable "$DOTFILES_DIR/bin/dotfiles-doctor" "$HOME/.local/bin/dotfiles-doctor"
   if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-    for script in agent-init agent-new agent-send agent-capture agent-status agent-check agent-review agent-land agent-gc agent-doctor; do
+    for script in agent agent-init agent-new agent-send agent-capture agent-status agent-check agent-review agent-land agent-gc agent-doctor; do
       sync_executable "$DOTFILES_DIR/bin/$script" "$HOME/.local/bin/$script"
     done
   fi

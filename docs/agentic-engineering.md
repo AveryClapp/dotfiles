@@ -80,22 +80,24 @@ Beads task
   -> explicit agent-land
 ```
 
-Beads owns task state and dependencies. Workmux owns worktree and tmux lifecycle.
-Agent Mail owns messages and advisory file reservations. Git owns source history.
-The identifier should match across all four systems.
+Beads is the centralized control plane and owns tasks, bugs, priorities,
+dependencies, follow-ups, and durable project memory. Workmux owns worktree and
+tmux lifecycle. Agent Mail owns messages and advisory file reservations. Git
+owns source history. The identifier should match across all four systems.
 
 ## First Project Setup
 
 Run this once inside each project that should use the workflow:
 
 ```bash
-agent-doctor
-agent-init
+agent doctor
+agent init
 ```
 
 `agent-init` initializes Beads, installs its detected Codex/Claude integration,
 installs tools from an existing `.mise.toml`, activates an existing Lefthook
-configuration, and configures workmux status hooks and skills. Beads Git hooks
+configuration, adds the centralized Beads policy to project `AGENTS.md` and
+`CLAUDE.md`, and configures workmux status hooks and skills. Beads Git hooks
 are deliberately off by default so `git push` has no hidden Beads work; use
 `agent-init --beads-git-hooks` only when the repository wants Beads' full Git
 lifecycle integration. Pass `--no-tooling` to skip mise and Lefthook. On a
@@ -104,6 +106,18 @@ this skips project hooks and agent-specific project files.
 
 The agent profile does not initialize Beads automatically. Repository metadata
 should be an explicit project decision.
+
+`agent init` is idempotent and can be rerun in an existing project. It refreshes
+the managed Beads integrations and replaces the dotfiles-owned policy blocks
+without overwriting project-specific instructions outside those markers. The
+first initialization of a repository without `.beads/` may add Beads metadata
+and an initialization commit. `agent init` therefore requires a clean worktree
+for the first normal initialization; commit or stash current changes, or use
+`--stealth` when Beads state must remain local.
+
+The unified `agent <command>` dispatcher maps to the underlying hyphenated
+commands, so `agent doctor`, `agent new`, and `agent status` are equivalent to
+`agent-doctor`, `agent-new`, and `agent-status`. Both forms remain supported.
 
 ## Daily Workflow
 
@@ -116,12 +130,35 @@ agent-new bd-a1b2
 ```
 
 `agent-new` claims a Bead before launching its worktree. With no argument, it
-offers an `fzf` picker over ready tasks. Work without Beads is also supported:
+offers an `fzf` picker over ready tasks. In a repository with `.beads/`, create
+and claim a Bead before substantial work. The branch-only form is for repositories
+that have not adopted Beads:
 
 ```bash
 agent-new fix-timeout --agent codex --prompt "Fix the timeout and add regression tests"
 agent-new docs-refresh --agent claude --layout solo --prompt-editor
 ```
+
+Discovered defects and deferred work go into Beads immediately:
+
+```bash
+bd create "Bug: refresh token survives logout" -t bug \
+  --deps discovered-from:bd-a1b2
+bd create "Split cache migration" -t task --parent bd-a1b2
+```
+
+Create child Beads before dispatching independent workers. Any Claude or Codex
+session can launch another worker without surrendering its own pane:
+
+```bash
+agent new <child-id> --agent claude --background
+agent new <child-id> --agent codex --background
+```
+
+Each worker has an independent model context and worktree. The parent monitors
+Beads for authoritative state, uses Agent Mail for coordination, and uses
+`agent status`, `agent capture`, or `agent send` for tmux-level observation and
+intervention. Do not use private model task lists as a second source of truth.
 
 Inspect and communicate:
 

@@ -15,7 +15,7 @@ Run `dotfiles-doctor` after syncing to check completion, Git helpers, binary
 architecture, nested repositories, missing commands, and config drift.
 
 Agent hosts use `make agent-sync` or
-`make sync ARGS="--profile agent-workstation"`. Run `agent-doctor` after syncing.
+`make sync ARGS="--profile agent-workstation"`. Run `agent doctor` after syncing.
 Use `--skill-pack all` during installation for the complete general, web,
 security, and research skill set. Config-only sync preserves installed external
 skills. Personal skills come from the separate sibling `../agent-skills` repo, are linked
@@ -127,9 +127,11 @@ parallel workmux flow:
 
 | Command / key | Action |
 |---|---|
+| `agent <command>` | Unified dispatcher; `agent-doctor` style commands remain available |
 | `agent-init` | Initialize Beads without adding a Git pre-push hook |
 | `agent-init --beads-git-hooks` | Opt into Beads commit/push lifecycle hooks |
 | `agent-new <id>` / `prefix+W` | Claim a task and launch an isolated agent worktree |
+| `bd create "Bug: ..." -t bug` | Immediately record a discovered defect in the central task graph |
 | `agent-status` / `prefix+g` | List worktrees or open the agent dashboard |
 | `agent-send %42 text` | Safely send literal text to a stable tmux pane ID |
 | `agent-review <branch>` | Launch an independent, non-editing review worktree |

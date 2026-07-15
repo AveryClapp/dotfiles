@@ -152,6 +152,18 @@ _cached_eval workmux completions bash
 _cached_eval just --completions bash
 _cached_eval cass completions bash
 
+_agent_complete() {
+  local current match
+  current="${COMP_WORDS[COMP_CWORD]}"
+  COMPREPLY=()
+  if [[ "$COMP_CWORD" -eq 1 ]]; then
+    while IFS= read -r match; do
+      COMPREPLY+=("$match")
+    done < <(compgen -W 'init new send capture status dashboard check review land gc doctor help' -- "$current")
+  fi
+}
+complete -F _agent_complete agent
+
 # ── Sudo plugin: double-ESC to prepend/strip sudo ─────────────────────────────
 _sudo_cmd() {
   [[ -z $READLINE_LINE ]] && READLINE_LINE=$(fc -ln -1)

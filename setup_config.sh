@@ -1198,7 +1198,7 @@ copy_configs() {
     chmod +x ~/.local/bin/dotfiles-doctor
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
         local agent_script
-        for agent_script in agent-init agent-new agent-send agent-capture agent-status agent-check agent-review agent-land agent-gc agent-doctor; do
+        for agent_script in agent agent-init agent-new agent-send agent-capture agent-status agent-check agent-review agent-land agent-gc agent-doctor; do
             cp "bin/$agent_script" "$HOME/.local/bin/$agent_script"
             chmod +x "$HOME/.local/bin/$agent_script"
         done
@@ -1397,7 +1397,7 @@ main() {
         next_step=$((next_step + 1))
     fi
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        echo "  $next_step. Run 'agent-doctor', then run 'agent-init' inside projects that should use Beads"
+        echo "  $next_step. Run 'agent doctor', then run 'agent init' inside projects that should use Beads"
         next_step=$((next_step + 1))
         echo "  $next_step. Start Agent Mail with 'am' when coordinating multiple agents"
     fi

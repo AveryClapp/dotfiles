@@ -27,6 +27,6 @@ fi
 
 SAFE="${TARGET//\//-}"
 HANDLE="review-${SAFE}-$(date +%Y%m%d%H%M%S)"
-PROMPT="Review branch $TARGET against $BASE. Do not edit files or create commits. Inspect the complete diff and relevant surrounding code. Run focused checks when useful. Report bugs, regressions, security risks, and missing tests first, ordered by severity, with file and line references. If there are no findings, say so and state residual test risk."
+PROMPT="Review branch $TARGET against $BASE. Do not edit files or create commits. Inspect the complete diff and relevant surrounding code. Run focused checks when useful. Report bugs, regressions, security risks, and missing tests first, ordered by severity, with file and line references. When .beads exists, immediately create a bug Bead for every actionable defect before reporting it, avoid duplicates, and include each Bead ID in the findings. If there are no findings, say so and state residual test risk."
 
 exec workmux add "$HANDLE" --base "$BASE" --agent "$AGENT" --prompt "$PROMPT" "$@"
