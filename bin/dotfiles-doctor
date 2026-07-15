@@ -57,6 +57,14 @@ check_git() {
   else
     ok "Git credential helpers do not hardcode /usr/local/bin/gh"
   fi
+  if command -v gh >/dev/null 2>&1 \
+    && gh auth status --hostname github.com >/dev/null 2>&1; then
+    if [[ "$helpers" == *'gh auth git-credential'* ]]; then
+      ok 'authenticated GitHub CLI is registered as a Git credential helper'
+    else
+      warn "GitHub CLI is authenticated but Git is not using it; run 'gh auth setup-git --hostname github.com'"
+    fi
+  fi
 
   if [[ -n "$ROOT" && -d "$ROOT" ]]; then
     nested="$(find "$ROOT" -mindepth 2 -type d -name .git -prune -print 2>/dev/null)"

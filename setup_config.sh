@@ -1190,6 +1190,20 @@ configure_git_delta() {
     print_success "git delta configured"
 }
 
+configure_github_credentials() {
+    command_exists gh || return
+    if gh auth status --hostname github.com >/dev/null 2>&1; then
+        print_info "Connecting Git to the authenticated GitHub CLI account..."
+        if gh auth setup-git --hostname github.com; then
+            print_success "GitHub credential helper configured"
+        else
+            print_warning "Could not configure the GitHub credential helper"
+        fi
+    else
+        print_info "GitHub CLI is not authenticated; run 'gh auth login' when private access or pushing is needed"
+    fi
+}
+
 configure_bash_default() {
     if skip_root_step; then
         print_info "Skipping default shell change because --no-sudo is set"
@@ -1551,6 +1565,7 @@ main() {
     copy_configs
     sync_doom
     install_emacs_daemon
+    configure_github_credentials
     configure_git_delta
     configure_agent_integrations
     configure_bash_default

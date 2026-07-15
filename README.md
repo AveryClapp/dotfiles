@@ -78,6 +78,10 @@ The script installs dependencies based on the selected profile, backs up existin
 
 **Shell** — `source ~/.bashrc` or open a new terminal.
 
+**GitHub** — credentials remain machine-local. Run `gh auth login` once on a
+new machine; subsequent dotfiles syncs restore Git's GitHub CLI credential
+helper automatically.
+
 **Agent profile** — run `agent doctor` and `just check`. Both should complete
 without warnings before the first agent task.
 
