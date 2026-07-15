@@ -152,7 +152,7 @@ Options:
   --skip-claude-plugins Skip Claude Code LSP and engineering plugins.
   --no-sudo             Skip steps that require root/sudo. On Linux this skips
                         package-manager installs and uses user-space fallbacks
-                        where available, such as Neovim AppImage.
+                        where available, such as Neovim through mise.
   --skip-packages       Do not install packages or package-manager tools.
   --skip-emacs          Skip Emacs, Doom, Doom sync, daemon setup, and Doom config.
   --skip-alacritty      Skip Alacritty config.
@@ -408,7 +408,8 @@ install_dependencies() {
     elif [[ "$OS" == "linux" ]]; then
         if skip_root_step; then
             print_warning "Skipping Linux package-manager installs because --no-sudo is set"
-            print_warning "Missing CLI tools may need manual/user-space installation: git, tmux, ripgrep, fd, fzf, bat, eza, delta, zoxide"
+            print_warning "Missing foundational CLI tools may need manual/user-space installation: git, tmux, ripgrep, fd, bat, eza, delta, zoxide"
+            [[ "$AGENT_TOOLS" -eq 1 ]] && print_info "The agent profile will install fzf and jq in user space with mise"
         elif command_exists apt-get; then
             sudo apt-get update
             sudo apt-get install -y \
@@ -521,9 +522,11 @@ install_neovim() {
         return
     fi
 
-    if command_exists nvim; then
+    if command_exists nvim && nvim --version >/dev/null 2>&1; then
         print_info "Neovim already installed, skipping..."
         return
+    elif command_exists nvim; then
+        print_warning "The existing nvim command is broken; reinstalling it"
     fi
 
     print_info "Installing Neovim..."
@@ -536,7 +539,7 @@ install_neovim() {
         brew install neovim
     elif [[ "$OS" == "linux" ]]; then
         if skip_root_step; then
-            install_neovim_appimage
+            install_neovim_user_space
         elif command_exists apt-get; then
             sudo add-apt-repository ppa:neovim-ppa/unstable -y
             sudo apt update
@@ -544,7 +547,7 @@ install_neovim() {
         elif command_exists dnf; then
             sudo dnf install -y neovim
         elif command_exists yum; then
-            sudo yum install -y neovim || install_neovim_appimage
+            sudo yum install -y neovim || install_neovim_user_space
         elif command_exists pacman; then
             sudo pacman -S --noconfirm neovim
         fi
@@ -553,15 +556,67 @@ install_neovim() {
     print_success "Neovim installed"
 }
 
-install_neovim_appimage() {
-    print_info "Installing Neovim AppImage..."
-    local nvim_dir="$HOME/.local/bin"
-    mkdir -p "$nvim_dir"
-    curl -Lo "$nvim_dir/nvim.appimage" \
-        https://github.com/neovim/neovim/releases/latest/download/nvim.appimage
-    chmod u+x "$nvim_dir/nvim.appimage"
-    ln -sf "$nvim_dir/nvim.appimage" "$nvim_dir/nvim"
-    print_success "Neovim AppImage installed to $nvim_dir/nvim"
+install_neovim_user_space() {
+    local bin_dir="$HOME/.local/bin"
+    if [[ -L "$bin_dir/nvim" && "$(readlink "$bin_dir/nvim")" == "$bin_dir/nvim.appimage" ]]; then
+        print_info "Removing a stale Neovim AppImage installation"
+        rm -f "$bin_dir/nvim" "$bin_dir/nvim.appimage"
+        hash -r
+    fi
+
+    if command_exists mise; then
+        print_info "Installing Neovim in user space with mise..."
+        if mise use -g neovim@latest; then
+            export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
+            hash -r
+            command_exists nvim && nvim --version >/dev/null 2>&1 && return 0
+        fi
+        print_warning "Could not install Neovim with mise; trying the official archive"
+    fi
+
+    install_neovim_archive
+}
+
+install_neovim_archive() {
+    print_info "Installing Neovim from the official user-space archive..."
+    local machine asset_arch asset_name url tmp_dir install_dir bin_dir
+    machine="$(uname -m)"
+    case "$machine" in
+        x86_64|amd64) asset_arch="x86_64" ;;
+        arm64|aarch64) asset_arch="arm64" ;;
+        *)
+            print_warning "No Neovim archive is available for architecture: $machine"
+            return 1
+            ;;
+    esac
+
+    asset_name="nvim-linux-${asset_arch}"
+    url="https://github.com/neovim/neovim/releases/latest/download/${asset_name}.tar.gz"
+    tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/nvim-install.XXXXXX")"
+    install_dir="$HOME/.local/opt/nvim"
+    bin_dir="$HOME/.local/bin"
+
+    if ! curl -fL --retry 3 -o "$tmp_dir/nvim.tar.gz" "$url"; then
+        rm -rf "$tmp_dir"
+        print_warning "Could not download Neovim from $url"
+        return 1
+    fi
+    if ! tar -xzf "$tmp_dir/nvim.tar.gz" -C "$tmp_dir" || \
+        [[ ! -x "$tmp_dir/$asset_name/bin/nvim" ]]; then
+        rm -rf "$tmp_dir"
+        print_warning "The downloaded Neovim archive was invalid"
+        return 1
+    fi
+
+    mkdir -p "$(dirname "$install_dir")" "$bin_dir"
+    rm -rf "${install_dir}.new"
+    mv "$tmp_dir/$asset_name" "${install_dir}.new"
+    rm -rf "$install_dir"
+    mv "${install_dir}.new" "$install_dir"
+    ln -sfn "$install_dir/bin/nvim" "$bin_dir/nvim"
+    rm -f "$bin_dir/nvim.appimage"
+    rm -rf "$tmp_dir"
+    print_success "Neovim installed to $bin_dir/nvim"
 }
 
 install_emacs() {
@@ -763,7 +818,9 @@ install_agent_cli_tools() {
     mise_use_global \
         just@latest \
         ast-grep@latest \
+        fzf@latest \
         gitleaks@latest \
+        jq@latest \
         lefthook@latest \
         lua-language-server@latest \
         node@lts \
