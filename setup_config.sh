@@ -1063,6 +1063,20 @@ localhost_port_in_use() {
     (exec 3<>"/dev/tcp/127.0.0.1/$port") >/dev/null 2>&1
 }
 
+start_agent_mail_tmux_service() {
+    local port="$1" session="agent-mail-service" am_path server_command
+    command_exists tmux || return 1
+    am_path="$(command -v am)"
+
+    if tmux has-session -t "$session" 2>/dev/null; then
+        tmux kill-session -t "$session" || return 1
+    fi
+    printf -v server_command \
+        'exec %q serve-http --host 127.0.0.1 --port %q --no-tui' \
+        "$am_path" "$port"
+    tmux new-session -d -s "$session" "$server_command"
+}
+
 configure_agent_mail() {
     [[ "$SKIP_AGENT_MAIL" -eq 0 ]] || return
     command_exists am || {
@@ -1091,20 +1105,29 @@ configure_agent_mail() {
 
     if ! agent_mail_endpoint_healthy "$port"; then
         print_info "Starting the Agent Mail user service on 127.0.0.1:$port..."
-        if ! am service install --host 127.0.0.1 --port "$port"; then
-            print_warning "Could not install the Agent Mail user service"
-            print_warning "Start it manually with: am serve-http --host 127.0.0.1 --port $port --no-tui"
-            return
+        if am service install --host 127.0.0.1 --port "$port"; then
+            for _ in {1..20}; do
+                agent_mail_endpoint_healthy "$port" && break
+                sleep 1
+            done
+        else
+            print_warning "Could not install the Agent Mail user service; trying persistent tmux"
         fi
-        for _ in {1..20}; do
-            agent_mail_endpoint_healthy "$port" && break
-            sleep 1
-        done
+    fi
+
+    if ! agent_mail_endpoint_healthy "$port"; then
+        print_info "Starting Agent Mail in the agent-mail-service tmux session..."
+        if start_agent_mail_tmux_service "$port"; then
+            for _ in {1..20}; do
+                agent_mail_endpoint_healthy "$port" && break
+                sleep 1
+            done
+        fi
     fi
 
     if ! agent_mail_endpoint_healthy "$port"; then
         print_warning "Agent Mail did not become healthy on 127.0.0.1:$port"
-        print_warning "Inspect it with: am service status"
+        print_warning "Inspect it with 'am service status' or 'tmux capture-pane -pt agent-mail-service'"
         return
     fi
 

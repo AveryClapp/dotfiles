@@ -225,7 +225,9 @@ only after confirming the repository does not rely on them for Beads sync.
 The agent profile installs a localhost user service and synchronizes the MCP
 client entries for detected agents. It prefers port `8765`, selects another
 local port when that port is occupied, and records the choice in
-`~/.config/dotfiles/agent-mail-port`.
+`~/.config/dotfiles/agent-mail-port`. On SSH or container hosts where native
+user services are unavailable, it runs the server in a persistent tmux session
+named `agent-mail-service`.
 
 Inspect or restart the service with:
 
@@ -233,6 +235,7 @@ Inspect or restart the service with:
 am service status
 am service restart
 am setup status
+tmux capture-pane -pt agent-mail-service
 ```
 
 The server binds to localhost only. Use the Bead ID as the mail thread ID and
