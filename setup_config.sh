@@ -75,6 +75,8 @@ SKILL_PACKS_SET=0
 SKILL_PACKS=()
 PERSONAL_SKILLS_REPO="${PERSONAL_SKILLS_REPO:-https://github.com/AveryClapp/agent-skills.git}"
 PERSONAL_SKILLS_DIR="${PERSONAL_SKILLS_DIR:-$(cd "$DOTFILES_DIR/.." && pwd)/agent-skills}"
+AGENT_MAIL_INSTALLER_URL="https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail_rust/main/install.sh"
+AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION="${AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION:-v0.3.10}"
 
 ################################################################################
 # Utility Functions
@@ -803,6 +805,42 @@ run_user_installer() {
     return "$status"
 }
 
+agent_mail_executable_works() {
+    command_exists am && am --version >/dev/null 2>&1
+}
+
+install_agent_mail_compat() {
+    [[ "$OS" == "linux" && "$(uname -m)" =~ ^(x86_64|amd64)$ ]] || return 1
+    print_warning "Installing static Agent Mail $AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION for Linux compatibility"
+    run_user_installer \
+        "${AGENT_MAIL_INSTALLER_URL}?$(date +%s)" \
+        --version "$AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION" --force --yes --verify
+}
+
+install_agent_mail() {
+    if agent_mail_executable_works; then
+        print_info "MCP Agent Mail already installed"
+        return
+    fi
+
+    if command_exists am; then
+        print_warning "The installed Agent Mail binary cannot run on this host"
+        install_agent_mail_compat || true
+    else
+        run_user_installer \
+            "${AGENT_MAIL_INSTALLER_URL}?$(date +%s)" \
+            --yes --verify \
+            || print_warning "Could not install the latest MCP Agent Mail release"
+        agent_mail_executable_works || install_agent_mail_compat || true
+    fi
+
+    if agent_mail_executable_works; then
+        print_success "MCP Agent Mail installed: $(am --version 2>/dev/null | head -n 1)"
+    else
+        print_warning "MCP Agent Mail is installed but cannot execute on this host"
+    fi
+}
+
 mise_use_global() {
     command_exists mise || {
         print_warning "mise is required to install user-space agent tools"
@@ -1002,14 +1040,7 @@ install_agent_tools() {
     fi
 
     if [[ "$SKIP_AGENT_MAIL" -eq 0 ]]; then
-        if command_exists am; then
-            print_info "MCP Agent Mail already installed"
-        else
-            run_user_installer \
-                "https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail_rust/main/install.sh?$(date +%s)" \
-                --yes --verify \
-                || print_warning "Could not install MCP Agent Mail"
-        fi
+        install_agent_mail
     fi
 
     if ! command_exists codex && ! command_exists claude; then
@@ -1079,8 +1110,8 @@ start_agent_mail_tmux_service() {
 
 configure_agent_mail() {
     [[ "$SKIP_AGENT_MAIL" -eq 0 ]] || return
-    command_exists am || {
-        print_warning "Agent Mail is unavailable; skipping MCP service setup"
+    agent_mail_executable_works || {
+        print_warning "Agent Mail cannot execute; skipping MCP service setup"
         return
     }
 

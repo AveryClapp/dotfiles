@@ -229,6 +229,11 @@ local port when that port is occupied, and records the choice in
 user services are unavailable, it runs the server in a persistent tmux session
 named `agent-mail-service`.
 
+Agent Mail releases are validated by executing `am --version`. If the latest
+GNU binary requires a newer glibc than an x86_64 Linux host provides, setup
+falls back to the pinned static musl release configured by
+`AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION`.
+
 Inspect or restart the service with:
 
 ```bash
