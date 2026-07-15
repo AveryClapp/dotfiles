@@ -69,6 +69,8 @@ Preview either profile without changing the machine:
 ```
 
 The script installs dependencies based on the selected profile, backs up existing configs, and copies everything into place. The default profile is a full local workstation setup; `--ssh` skips GUI-only pieces like Alacritty, fonts, and Emacs/Doom.
+On Linux, `--no-sudo` installs `gh`, `fzf`, and `jq` through `mise` when system
+packages are unavailable.
 
 ## Post-Installation
 

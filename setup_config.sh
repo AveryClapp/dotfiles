@@ -411,7 +411,7 @@ install_dependencies() {
         if skip_root_step; then
             print_warning "Skipping Linux package-manager installs because --no-sudo is set"
             print_warning "Missing foundational CLI tools may need manual/user-space installation: git, tmux, ripgrep, fd, bat, eza, delta, zoxide"
-            [[ "$AGENT_TOOLS" -eq 1 ]] && print_info "The agent profile will install fzf and jq in user space with mise"
+            print_info "gh, fzf, and jq will be installed in user space with mise"
         elif command_exists apt-get; then
             sudo apt-get update
             sudo apt-get install -y \
@@ -513,6 +513,19 @@ install_dependencies() {
         mise use -g just@latest \
             || print_warning "Could not install just with mise"
         export PATH="$HOME/.local/share/mise/shims:$PATH"
+    fi
+    if [[ "$OS" == "linux" && "$NO_SUDO" -eq 1 ]] && command_exists mise; then
+        local user_cli_fallbacks=()
+        command_exists gh || user_cli_fallbacks+=(gh@latest)
+        command_exists fzf || user_cli_fallbacks+=(fzf@latest)
+        command_exists jq || user_cli_fallbacks+=(jq@latest)
+        if [[ "${#user_cli_fallbacks[@]}" -gt 0 ]]; then
+            print_info "Installing no-sudo CLI fallbacks with mise..."
+            mise use -g "${user_cli_fallbacks[@]}" \
+                || print_warning "Some no-sudo CLI fallbacks could not be installed"
+        fi
+        export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
+        hash -r
     fi
 
     print_success "Dependencies installed"
@@ -856,9 +869,7 @@ install_agent_cli_tools() {
     mise_use_global \
         just@latest \
         ast-grep@latest \
-        fzf@latest \
         gitleaks@latest \
-        jq@latest \
         lefthook@latest \
         lua-language-server@latest \
         node@lts \
