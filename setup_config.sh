@@ -1049,6 +1049,71 @@ configure_agent_integrations() {
         workmux setup --hooks --skills \
             || print_warning "workmux setup needs attention; run it manually"
     fi
+    configure_agent_mail
+}
+
+agent_mail_endpoint_healthy() {
+    local port="$1" response
+    response="$(curl -fsS --max-time 2 "http://127.0.0.1:${port}/healthz" 2>/dev/null || true)"
+    [[ "$response" == *'"status":"alive"'* ]]
+}
+
+localhost_port_in_use() {
+    local port="$1"
+    (exec 3<>"/dev/tcp/127.0.0.1/$port") >/dev/null 2>&1
+}
+
+configure_agent_mail() {
+    [[ "$SKIP_AGENT_MAIL" -eq 0 ]] || return
+    command_exists am || {
+        print_warning "Agent Mail is unavailable; skipping MCP service setup"
+        return
+    }
+
+    local port_file="$HOME/.config/dotfiles/agent-mail-port"
+    local preferred_port="8765" port="" candidate
+    if [[ -r "$port_file" ]]; then
+        read -r preferred_port <"$port_file"
+        [[ "$preferred_port" =~ ^[0-9]+$ ]] || preferred_port="8765"
+    fi
+
+    for candidate in "$preferred_port" 8765 8766 8767 9000; do
+        [[ "$candidate" =~ ^[0-9]+$ ]] || continue
+        if agent_mail_endpoint_healthy "$candidate" || ! localhost_port_in_use "$candidate"; then
+            port="$candidate"
+            break
+        fi
+    done
+    if [[ -z "$port" ]]; then
+        print_warning "Could not find a free localhost port for Agent Mail"
+        return
+    fi
+
+    if ! agent_mail_endpoint_healthy "$port"; then
+        print_info "Starting the Agent Mail user service on 127.0.0.1:$port..."
+        if ! am service install --host 127.0.0.1 --port "$port"; then
+            print_warning "Could not install the Agent Mail user service"
+            print_warning "Start it manually with: am serve-http --host 127.0.0.1 --port $port --no-tui"
+            return
+        fi
+        for _ in {1..20}; do
+            agent_mail_endpoint_healthy "$port" && break
+            sleep 1
+        done
+    fi
+
+    if ! agent_mail_endpoint_healthy "$port"; then
+        print_warning "Agent Mail did not become healthy on 127.0.0.1:$port"
+        print_warning "Inspect it with: am service status"
+        return
+    fi
+
+    mkdir -p "$(dirname "$port_file")"
+    printf '%s\n' "$port" >"$port_file"
+    print_info "Synchronizing Agent Mail MCP clients..."
+    am setup run --yes --no-hooks --host 127.0.0.1 --port "$port" --project-dir "$HOME" \
+        || print_warning "Agent Mail MCP client setup needs attention; run 'am setup status'"
+    print_success "Agent Mail is ready on 127.0.0.1:$port"
 }
 
 configure_git_delta() {
@@ -1456,7 +1521,7 @@ main() {
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
         echo "  $next_step. Run 'agent doctor', then run 'agent init' inside projects that should use Beads"
         next_step=$((next_step + 1))
-        echo "  $next_step. Start Agent Mail with 'am' when coordinating multiple agents"
+        echo "  $next_step. Confirm Agent Mail with 'am service status'"
     fi
     echo ""
 

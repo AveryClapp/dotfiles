@@ -222,14 +222,21 @@ only after confirming the repository does not rely on them for Beads sync.
 
 ## Agent Mail
 
-Start the local operator UI only when agents need to coordinate:
+The agent profile installs a localhost user service and synchronizes the MCP
+client entries for detected agents. It prefers port `8765`, selects another
+local port when that port is occupied, and records the choice in
+`~/.config/dotfiles/agent-mail-port`.
+
+Inspect or restart the service with:
 
 ```bash
-am
+am service status
+am service restart
+am setup status
 ```
 
-The server binds to localhost by default. Use the Bead ID as the mail thread ID
-and reservation reason. Reserve narrow file globs with finite leases, announce
+The server binds to localhost only. Use the Bead ID as the mail thread ID and
+reservation reason. Reserve narrow file globs with finite leases, announce
 interface changes, and release reservations at completion. A reservation is a
 coordination mechanism, not a substitute for worktree isolation.
 

@@ -39,6 +39,18 @@ fi
 
 if command -v am >/dev/null 2>&1; then
   ok "Agent Mail: $(command -v am)"
+  agent_mail_port=8765
+  if [[ -r "$HOME/.config/dotfiles/agent-mail-port" ]]; then
+    read -r agent_mail_port <"$HOME/.config/dotfiles/agent-mail-port"
+  fi
+  [[ "$agent_mail_port" =~ ^[0-9]+$ ]] || agent_mail_port=8765
+  agent_mail_health="$(curl -fsS --max-time 2 \
+    "http://127.0.0.1:${agent_mail_port}/healthz" 2>/dev/null || true)"
+  if [[ "$agent_mail_health" == *'"status":"alive"'* ]]; then
+    ok "Agent Mail MCP service: 127.0.0.1:$agent_mail_port"
+  else
+    warn "Agent Mail MCP service is not healthy on 127.0.0.1:$agent_mail_port"
+  fi
 else
   warn 'Agent Mail is not installed (am)'
 fi
