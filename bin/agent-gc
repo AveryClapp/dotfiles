@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command -v workmux >/dev/null 2>&1 || { printf 'error: workmux is not installed\n' >&2; exit 1; }
+
+git worktree prune --verbose
+workmux remove --gone "$@"
+if command -v claude >/dev/null 2>&1; then
+  workmux claude prune
+fi

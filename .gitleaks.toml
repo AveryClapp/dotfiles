@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "authorization-header-token"
+description = "Long token embedded in an Authorization header"
+regex = '''(?i)authorization.{0,24}bearer[[:space:]]+([a-z0-9._~+/=-]{20,})'''
+secretGroup = 1

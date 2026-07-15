@@ -4,6 +4,7 @@
 
 [core]
 	pager = delta
+	untrackedCache = true
 
 [interactive]
 	diffFilter = delta --color-only
@@ -29,3 +30,9 @@
 
 [diff]
 	algorithm = histogram
+
+[fetch]
+	writeCommitGraph = true
+
+[include]
+	path = ~/.gitconfig.local

@@ -1,0 +1,174 @@
+#!/usr/bin/env bash
+set -u
+
+WARNINGS=0
+ok() { printf '[ok]   %s\n' "$1"; }
+warn() { printf '[warn] %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
+info() { printf '[info] %s\n' "$1"; }
+
+DOTFILES_REPO=""
+if [[ -r "$HOME/.config/dotfiles/repo" ]]; then
+  read -r DOTFILES_REPO <"$HOME/.config/dotfiles/repo"
+fi
+if [[ -z "${PERSONAL_SKILLS_DIR:-}" && -n "$DOTFILES_REPO" ]]; then
+  PERSONAL_SKILLS_DIR="$(cd "$DOTFILES_REPO/.." 2>/dev/null && pwd)/agent-skills"
+fi
+PERSONAL_SKILLS_DIR="${PERSONAL_SKILLS_DIR:-$HOME/Documents/Coding/GitProjects/agent-skills}"
+
+check_required() {
+  if command -v "$1" >/dev/null 2>&1; then
+    ok "$1: $(command -v "$1")"
+  else
+    warn "$1 is not installed"
+  fi
+}
+
+printf 'Agent environment doctor\n\n'
+for command_name in \
+  git tmux fzf jq workmux bd dcg mise just ast-grep gitleaks lefthook cass \
+  pyright-langserver typescript-language-server lua-language-server; do
+  check_required "$command_name"
+done
+
+if command -v codex >/dev/null 2>&1 || command -v claude >/dev/null 2>&1; then
+  command -v codex >/dev/null 2>&1 && ok "codex: $(command -v codex)"
+  command -v claude >/dev/null 2>&1 && ok "claude: $(command -v claude)"
+else
+  warn 'no supported coding agent found (codex or claude)'
+fi
+
+if command -v am >/dev/null 2>&1; then
+  ok "Agent Mail: $(command -v am)"
+else
+  warn 'Agent Mail is not installed (am)'
+fi
+
+if command -v agent-browser >/dev/null 2>&1; then
+  ok "agent-browser: $(command -v agent-browser)"
+else
+  info 'agent-browser is installed by the optional web skill pack'
+fi
+
+if command -v ghostty >/dev/null 2>&1; then
+  ok "Ghostty: $(command -v ghostty)"
+elif [[ -d /Applications/Ghostty.app ]]; then
+  ok 'Ghostty: /Applications/Ghostty.app'
+else
+  info 'Ghostty is optional on CLI-only/SSH profiles'
+fi
+
+printf '\n'
+if [[ -r "$HOME/.config/workmux/config.yaml" ]]; then
+  ok 'workmux config installed'
+else
+  warn 'workmux config is missing'
+fi
+if [[ -d "$PERSONAL_SKILLS_DIR/.git" ]]; then
+  ok "personal skill repository: $PERSONAL_SKILLS_DIR"
+  personal_skills_remote="$(git -C "$PERSONAL_SKILLS_DIR" remote get-url origin 2>/dev/null || true)"
+  if [[ "$personal_skills_remote" == "https://github.com/AveryClapp/agent-skills.git" ]]; then
+    ok 'personal skill repository origin is configured'
+  else
+    warn "personal skill repository origin is unexpected: ${personal_skills_remote:-missing}"
+  fi
+else
+  warn "personal skill repository is missing: $PERSONAL_SKILLS_DIR"
+fi
+for skill_name in agentic-engineering dotfiles-maintenance; do
+  skill_source="$PERSONAL_SKILLS_DIR/skills/$skill_name"
+  skill_catalog="$HOME/.agents/skills/$skill_name"
+  if [[ -r "$skill_source/SKILL.md" ]]; then
+    ok "personal skill source: $skill_name"
+  else
+    warn "personal skill source is missing: $skill_source"
+  fi
+  if [[ -L "$skill_catalog" && "$(readlink "$skill_catalog")" == "$skill_source" ]]; then
+    ok "shared skill link: $skill_name"
+  elif [[ -r "$skill_catalog/SKILL.md" ]]; then
+    warn "shared skill is readable but not linked to $PERSONAL_SKILLS_DIR: $skill_name"
+  else
+    warn "shared skill is missing: $skill_name"
+  fi
+done
+if [[ -r "$HOME/.agents/skills/agentic-engineering/SKILL.md" ]]; then
+  ok 'canonical agentic-engineering skill installed'
+else
+  warn 'shared agent skill is missing'
+fi
+if [[ -r "$HOME/.claude/skills/agentic-engineering/SKILL.md" ]]; then
+  ok 'agentic-engineering skill published to Claude Code'
+else
+  warn 'agentic-engineering skill is not published to Claude Code'
+fi
+if [[ -r "$HOME/.codex/skills/agentic-engineering/SKILL.md" ]]; then
+  ok 'agentic-engineering skill published to Codex'
+else
+  warn 'agentic-engineering skill is not published to Codex'
+fi
+if [[ -s "$HOME/.codex/AGENTS.md" ]]; then
+  ok 'Codex global guidance installed'
+else
+  info 'Codex global guidance not installed'
+fi
+
+if command -v claude >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+  plugins_json="$(claude plugin list --json 2>/dev/null || printf '[]')"
+  for plugin_id in \
+    pyright-lsp@claude-plugins-official \
+    typescript-lsp@claude-plugins-official \
+    lua-lsp@claude-plugins-official \
+    skill-creator@claude-plugins-official \
+    pr-review-toolkit@claude-plugins-official; do
+    if jq -e --arg id "$plugin_id" '.[] | select(.id == $id and .enabled == true)' \
+      >/dev/null 2>&1 <<<"$plugins_json"; then
+      ok "Claude plugin: $plugin_id"
+    else
+      warn "Claude plugin is missing or disabled: $plugin_id"
+    fi
+  done
+  if jq -e '.[] | select(.id == "academic-research-skills@academic-research-skills" and .enabled == true)' \
+    >/dev/null 2>&1 <<<"$plugins_json"; then
+    warn 'academic-research-skills is enabled globally and adds substantial startup context'
+  fi
+  if jq -e '.[] | select(.id == "plugin-dev@claude-plugins-official" and .enabled == true)' \
+    >/dev/null 2>&1 <<<"$plugins_json"; then
+    warn 'plugin-dev is enabled globally; enable it only while developing a Claude plugin'
+  fi
+fi
+
+root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if [[ -f "$root/justfile" || -f "$root/Justfile" || -f "$root/.justfile" ]]; then
+  ok 'current repository exposes a just task contract'
+fi
+
+if command -v bd >/dev/null 2>&1; then
+  bd_version="$(bd version 2>/dev/null | head -n 1)"
+  if [[ "$bd_version" == *"version 0."* ]]; then
+    warn "$bd_version; this workflow expects Dolt-backed Beads 1.x"
+  else
+    info "$bd_version"
+  fi
+  bd_paths="$(type -a -p bd 2>/dev/null | awk '!seen[$0]++')"
+  if [[ "$(printf '%s\n' "$bd_paths" | sed '/^$/d' | wc -l | tr -d ' ')" -gt 1 ]]; then
+    warn "multiple bd binaries are on PATH: $(printf '%s' "$bd_paths" | tr '\n' ' ')"
+  fi
+fi
+
+if [[ -d "$root/.beads" ]]; then
+  ok 'current repository has Beads initialized'
+  if command -v bd >/dev/null 2>&1 \
+    && bd hooks list 2>/dev/null | grep -q 'pre-push: installed'; then
+    warn 'current repository has a Beads pre-push hook; remove it with bd hooks uninstall if push latency matters'
+  else
+    ok 'current repository has no Beads pre-push hook'
+  fi
+else
+  info 'current repository has no .beads directory; run agent-init when desired'
+fi
+
+printf '\n'
+if [[ "$WARNINGS" -eq 0 ]]; then
+  printf 'All agent checks passed.\n'
+else
+  printf '%d warning(s) found.\n' "$WARNINGS"
+fi

@@ -16,6 +16,11 @@
 (setq doom-font (font-spec :family "JetBrainsMono Nerd Font" :size 14))
 (setq display-line-numbers-type 'relative)               ; number + relativenumber
 
+;; Auto-discover projects (SPC p p) under coding dirs, one level deep.
+(setq projectile-project-search-path
+      '(("~/Documents/Coding/GitProjects" . 1)
+        ("~/Documents/Coding" . 1)))
+
 ;;; ---------------------------------------------------------------------------
 ;;; Editor options  (init.lua: tabstop/shiftwidth/scrolloff/splits/case)
 ;;; ---------------------------------------------------------------------------

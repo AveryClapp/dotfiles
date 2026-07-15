@@ -1,0 +1,30 @@
+# Shared defaults. Projects can override these in .workmux.yaml.
+agent: codex
+mode: window
+worktree_dir: ~/.worktrees/{project}
+window_prefix: ag-
+window_placement: rightmost
+merge_strategy: rebase
+merge_keep: false
+nerdfont: true
+
+# tmux.conf owns the window format so manual and agent windows look consistent.
+status_format: false
+
+panes:
+  - command: <agent>
+    focus: true
+  - split: horizontal
+
+layouts:
+  solo:
+    panes:
+      - command: <agent>
+        focus: true
+  dev:
+    panes:
+      - command: <agent>
+        focus: true
+      - split: horizontal
+      - command: nvim
+        split: vertical

@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+HANDLE=""
+PROMPT=""
+AGENT=""
+PROMPT_SUPPLIED=0
+AUTO_NAME=0
+WORKMUX_ARGS=()
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+
+usage() {
+  cat <<'EOF'
+Usage: agent-new [bead-id|branch] [options] [prompt text]
+
+Create an isolated worktree and launch an agent through workmux. With no
+identifier, interactively select a ready Beads task when jq and fzf are present.
+
+Options:
+  -a, --agent NAME       Agent command/profile (codex, claude, ...).
+  -p, --prompt TEXT      Task prompt.
+  -P, --prompt-file FILE Read the task prompt from a file.
+  -l, --layout NAME      workmux pane layout.
+  -A, --auto-name        Let workmux generate the branch name.
+  -h, --help             Show this help.
+
+Additional supported workmux flags include --base, --background, --wait,
+--with-changes, --include-untracked, --no-hooks, and --no-file-ops.
+EOF
+}
+
+choose_ready_bead() {
+  command -v bd >/dev/null 2>&1 || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+  command -v fzf >/dev/null 2>&1 || return 1
+  [[ -d "$REPO_ROOT/.beads" ]] || return 1
+
+  local selected
+  selected="$(bd ready --json | jq -r '.[] | [.id, (.priority // "-"), .title] | @tsv' |
+    fzf --height=40% --prompt='ready task: ' --with-nth=1,2,3)" || return 1
+  printf '%s\n' "${selected%%$'\t'*}"
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -a|--agent)
+      [[ $# -ge 2 ]] || { printf 'error: %s requires a value\n' "$1" >&2; exit 2; }
+      AGENT="$2"
+      shift
+      ;;
+    -p|--prompt)
+      [[ $# -ge 2 ]] || { printf 'error: %s requires a value\n' "$1" >&2; exit 2; }
+      PROMPT="$2"
+      PROMPT_SUPPLIED=1
+      shift
+      ;;
+    -P|--prompt-file)
+      [[ $# -ge 2 ]] || { printf 'error: %s requires a value\n' "$1" >&2; exit 2; }
+      WORKMUX_ARGS+=("$1" "$2")
+      PROMPT_SUPPLIED=1
+      shift
+      ;;
+    -l|--layout)
+      [[ $# -ge 2 ]] || { printf 'error: %s requires a value\n' "$1" >&2; exit 2; }
+      WORKMUX_ARGS+=("$1" "$2")
+      shift
+      ;;
+    -A|--auto-name)
+      WORKMUX_ARGS+=("$1")
+      AUTO_NAME=1
+      ;;
+    --base|--name)
+      [[ $# -ge 2 ]] || { printf 'error: %s requires a value\n' "$1" >&2; exit 2; }
+      WORKMUX_ARGS+=("$1" "$2")
+      shift
+      ;;
+    --background|--wait|--with-changes|--include-untracked|--no-hooks|--no-file-ops|--no-pane-cmds|--prompt-editor|--prompt-file-only)
+      WORKMUX_ARGS+=("$1")
+      [[ "$1" == --prompt-editor ]] && PROMPT_SUPPLIED=1
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      while [[ $# -gt 0 ]]; do
+        PROMPT+="${PROMPT:+ }$1"
+        PROMPT_SUPPLIED=1
+        shift
+      done
+      break
+      ;;
+    -*) printf 'error: unsupported option: %s\n' "$1" >&2; usage; exit 2 ;;
+    *)
+      if [[ -z "$HANDLE" ]]; then
+        HANDLE="$1"
+      else
+        PROMPT+="${PROMPT:+ }$1"
+        PROMPT_SUPPLIED=1
+      fi
+      ;;
+  esac
+  shift
+done
+
+command -v workmux >/dev/null 2>&1 || {
+  printf 'error: workmux is not installed\n' >&2
+  exit 1
+}
+
+if [[ -z "$HANDLE" && "$AUTO_NAME" -eq 0 ]]; then
+  HANDLE="$(choose_ready_bead)" || {
+    printf 'error: provide a bead ID or branch (interactive selection unavailable)\n' >&2
+    exit 2
+  }
+fi
+
+if [[ "$HANDLE" == bd-* && -d "$REPO_ROOT/.beads" ]]; then
+  bd show "$HANDLE" >/dev/null
+  bd update "$HANDLE" --claim
+  if [[ "$PROMPT_SUPPLIED" -eq 0 ]]; then
+    PROMPT="Work on Beads task $HANDLE. Run bd prime and bd show $HANDLE first. Satisfy its acceptance criteria, run relevant checks, record durable discoveries with bd remember, and do not merge or push."
+    PROMPT_SUPPLIED=1
+  fi
+fi
+
+args=(add)
+[[ -n "$HANDLE" ]] && args+=("$HANDLE")
+[[ -n "$AGENT" ]] && args+=(--agent "$AGENT")
+[[ -n "$PROMPT" ]] && args+=(--prompt "$PROMPT")
+args+=("${WORKMUX_ARGS[@]}")
+exec workmux "${args[@]}"

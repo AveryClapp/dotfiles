@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$root"
+
+if [[ -n "${AGENT_CHECK_COMMAND:-}" ]]; then
+  printf 'Running AGENT_CHECK_COMMAND: %s\n' "$AGENT_CHECK_COMMAND"
+  exec bash -c "$AGENT_CHECK_COMMAND"
+elif command -v just >/dev/null 2>&1 \
+  && [[ -f justfile || -f Justfile || -f .justfile ]] \
+  && [[ " $(just --summary 2>/dev/null) " == *" check "* ]]; then
+  exec just check
+elif [[ -x ./scripts/check ]]; then
+  exec ./scripts/check
+elif [[ -f Makefile ]] && make -n check >/dev/null 2>&1; then
+  exec make check
+elif [[ -f Cargo.toml ]]; then
+  exec cargo test --all-targets
+elif [[ -f go.mod ]]; then
+  exec go test ./...
+elif [[ -f package.json ]] && command -v jq >/dev/null 2>&1 && jq -e '.scripts.check' package.json >/dev/null; then
+  exec npm run check
+elif [[ -f package.json ]] && command -v jq >/dev/null 2>&1 && jq -e '.scripts.test' package.json >/dev/null; then
+  exec npm test
+elif [[ -f pyproject.toml || -f pytest.ini || -d tests ]] && command -v pytest >/dev/null 2>&1; then
+  exec pytest
+else
+  printf 'error: no project check command detected\n' >&2
+  printf 'Set AGENT_CHECK_COMMAND or add just check / scripts/check / make check.\n' >&2
+  exit 2
+fi

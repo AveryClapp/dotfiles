@@ -1,0 +1,5 @@
+# Machine-local Ghostty overrides. This file is copied to
+# ~/.config/dotfiles/ghostty.local once and then preserved.
+#
+# font-size = 14
+# keybind = global:cmd+space=toggle_quick_terminal

@@ -27,7 +27,8 @@ Then run `:Mason` to install LSP servers and `:TSUpdate` to update parsers.
 
 ## Project-Local Keymaps
 
-Drop a `.nvim.lua` in any project root — it's auto-sourced on open (`exrc = true`):
+Drop a `.nvim.lua` in any project root. Neovim prompts before trusting a new
+project config; inspect it and run `:trust` from that buffer to allow it:
 
 ```lua
 -- myproject/.nvim.lua

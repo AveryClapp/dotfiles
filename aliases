@@ -1,16 +1,23 @@
+# shellcheck shell=bash
+
 # ── Navigation ─────────────────────────────────────────────────────────────────
 alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
 # ── File listing (eza) ─────────────────────────────────────────────────────────
-alias ls='eza --color=always --group-directories-first --no-git'
-alias ll='eza -la --color=always --group-directories-first --no-git'
-alias lt='eza --tree --color=always --level=2 --no-git'
-alias la='eza -a --color=always --group-directories-first --no-git'
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza --color=always --group-directories-first --no-git'
+  alias ll='eza -la --color=always --group-directories-first --no-git'
+  alias lt='eza --tree --color=always --level=2 --no-git'
+  alias la='eza -a --color=always --group-directories-first --no-git'
+else
+  alias ll='ls -la'
+  alias la='ls -A'
+fi
 
 # ── Better defaults ────────────────────────────────────────────────────────────
-alias claude='claude --dangerously-skip-permissions'
+alias claude-yolo='claude --dangerously-skip-permissions'
 alias grep='grep --color=auto'
 alias cp='cp -i'
 alias mv='mv -i'
@@ -36,16 +43,22 @@ alias tl='tmux ls'
 alias tk='tmux kill-session -t'
 
 _ta_complete() {
-  local cur sessions
+  local cur sessions session
   cur="${COMP_WORDS[COMP_CWORD]}"
   sessions=$(tmux list-sessions -F '#S' 2>/dev/null)
-  COMPREPLY=($(IFS=$'\n' compgen -W "$sessions" -- "" | grep -i "^$cur"))
+  COMPREPLY=()
+  while IFS= read -r session; do
+    COMPREPLY+=("$session")
+  done < <(compgen -W "$sessions" -- "$cur")
 }
 _session_complete() {
-  local cur sessions
+  local cur sessions session
   cur="${COMP_WORDS[COMP_CWORD]}"
   sessions=$(tmux list-sessions -F '#S' 2>/dev/null)
-  COMPREPLY=($(IFS=$'\n' compgen -W "$sessions" -- "" | grep -i "^$cur"))
+  COMPREPLY=()
+  while IFS= read -r session; do
+    COMPREPLY+=("$session")
+  done < <(compgen -W "$sessions" -- "$cur")
 }
 complete -F _ta_complete ta
 complete -F _session_complete tk
@@ -67,10 +80,23 @@ alias tasks='taskwarrior-tui'
 alias top='btop'
 alias bench='hyperfine'
 alias help='tldr'
+
+# ── Agent workflow ─────────────────────────────────────────────────────────────
+alias agnew='agent-new'
+alias agstatus='agent-status'
+alias agdash='agent-status --dashboard'
+alias agreview='agent-review'
+alias agland='agent-land'
+alias aggc='agent-gc'
 kill_port() {
-  kill -9 $(lsof -t -i:"$1")
+  [[ "${1:-}" =~ ^[0-9]+$ ]] || {
+    printf 'usage: kill_port <port>\n' >&2
+    return 2
+  }
+  lsof -t -i:"$1" | xargs kill -9
 }
 # ── entr watch shortcuts ───────────────────────────────────────────────────────
 alias watch-make='git ls-files | entr -c make'
 alias watch-cargo='git ls-files | entr -c cargo run'
 alias watch-test='git ls-files | entr -c cargo test'
+alias codex='codex --yolo'

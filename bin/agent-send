@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SEND_ENTER=1
+TARGET=""
+
+usage() {
+  cat <<'EOF'
+Usage: agent-send [--no-enter] [pane-id] [message ...]
+
+Send literal text to a live tmux pane. If pane-id is omitted, choose a pane with
+fzf. If message is omitted, read one line interactively or all text from stdin.
+EOF
+}
+
+if [[ "${1:-}" == "--no-enter" ]]; then
+  SEND_ENTER=0
+  shift
+fi
+if [[ "${1:-}" == -h || "${1:-}" == --help ]]; then
+  usage
+  exit 0
+fi
+if [[ "${1:-}" == %* ]]; then
+  TARGET="$1"
+  shift
+fi
+
+command -v tmux >/dev/null 2>&1 || { printf 'error: tmux is not installed\n' >&2; exit 1; }
+
+if [[ -z "$TARGET" ]]; then
+  command -v fzf >/dev/null 2>&1 || { printf 'error: fzf is required to select a pane\n' >&2; exit 1; }
+  selected="$(tmux list-panes -a -F '#{pane_id}\t#{session_name}:#{window_index}.#{pane_index}\t#{pane_current_command}\t#{pane_current_path}' |
+    fzf --height=40% --prompt='target pane: ')" || exit 0
+  TARGET="${selected%%$'\t'*}"
+fi
+
+pane_dead="$(tmux display-message -p -t "$TARGET" '#{pane_dead}' 2>/dev/null)" || {
+  printf 'error: tmux pane %s does not exist\n' "$TARGET" >&2
+  exit 1
+}
+[[ "$pane_dead" == 0 ]] || { printf 'error: tmux pane %s is dead\n' "$TARGET" >&2; exit 1; }
+
+if [[ $# -gt 0 ]]; then
+  MESSAGE="$*"
+elif [[ ! -t 0 ]]; then
+  MESSAGE="$(command cat)"
+else
+  IFS= read -r -p 'message: ' MESSAGE
+fi
+
+[[ -n "$MESSAGE" ]] || { printf 'error: refusing to send an empty message\n' >&2; exit 2; }
+
+BUFFER="agent-send-$$"
+tmux set-buffer -b "$BUFFER" -- "$MESSAGE"
+tmux paste-buffer -b "$BUFFER" -t "$TARGET" -d
+[[ "$SEND_ENTER" -eq 0 ]] || tmux send-keys -t "$TARGET" Enter

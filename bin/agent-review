@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+TARGET="${1:-$(git branch --show-current)}"
+AGENT="${AGENT_REVIEWER:-codex}"
+[[ $# -eq 0 ]] || shift
+
+if [[ "$TARGET" == -h || "$TARGET" == --help || -z "$TARGET" ]]; then
+  printf 'Usage: agent-review [branch] [workmux-options]\n'
+  [[ -n "$TARGET" ]] && exit 0 || exit 2
+fi
+
+git show-ref --verify --quiet "refs/heads/$TARGET" || {
+  printf 'error: local branch not found: %s\n' "$TARGET" >&2
+  exit 1
+}
+
+BASE="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+BASE="${BASE#origin/}"
+if [[ -z "$BASE" ]]; then
+  git show-ref --verify --quiet refs/heads/main && BASE=main || BASE=master
+fi
+if [[ "$TARGET" == "$BASE" ]]; then
+  printf 'error: %s is the base branch; review a feature branch instead\n' "$TARGET" >&2
+  exit 2
+fi
+
+SAFE="${TARGET//\//-}"
+HANDLE="review-${SAFE}-$(date +%Y%m%d%H%M%S)"
+PROMPT="Review branch $TARGET against $BASE. Do not edit files or create commits. Inspect the complete diff and relevant surrounding code. Run focused checks when useful. Report bugs, regressions, security risks, and missing tests first, ordered by severity, with file and line references. If there are no findings, say so and state residual test risk."
+
+exec workmux add "$HANDLE" --base "$BASE" --agent "$AGENT" --prompt "$PROMPT" "$@"

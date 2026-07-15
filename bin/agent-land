@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+RUN_CHECKS=1
+ARGS=()
+for arg in "$@"; do
+  case "$arg" in
+    --no-check) RUN_CHECKS=0 ;;
+    -h|--help)
+      printf 'Usage: agent-land [--no-check] [workmux-merge-options]\n'
+      exit 0
+      ;;
+    *) ARGS+=("$arg") ;;
+  esac
+done
+
+if [[ "$RUN_CHECKS" -eq 1 ]]; then
+  agent-check
+fi
+
+exec workmux merge --rebase "${ARGS[@]}"

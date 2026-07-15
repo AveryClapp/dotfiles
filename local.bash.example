@@ -1,0 +1,29 @@
+# Machine-local shell configuration. This file is copied once to
+# ~/.config/dotfiles/local.bash and is never overwritten by future syncs.
+
+_local_path_prepend() {
+  [[ -d "$1" ]] && export PATH="$1:$PATH"
+}
+
+_local_path_prepend "$HOME/Documents/Coding/GitProjects/Claude-Code/Fallback"
+_local_path_prepend "$HOME/.moose/bin"
+_local_path_prepend "/usr/local/mongodb/bin"
+unset -f _local_path_prepend
+
+cppdev() {
+  ssh -i "$HOME/Documents/Coding/keys-n-pems/c++dev.pem" ubuntu@"$1"
+}
+
+predlogin() {
+  ssh -i "$HOME/Documents/Coding/keys-n-pems/c++dev.pem" ec2-user@"$1"
+}
+
+run_research() {
+  ssh -Y -i "$HOME/Documents/aclapp1.pem" ec2-user@"$1"
+}
+
+get_profile() {
+  scp -i "$HOME/Documents/aclapp1.pem" \
+    ec2-user@"$1":~/ESMM-Research/"$2" \
+    "$HOME/Documents/School/Research/NVIDIA Nsight Compute/"
+}

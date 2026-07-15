@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+STEALTH=0
+SKIP_BEADS=0
+SKIP_WORKMUX_SETUP=0
+SKIP_PROJECT_TOOLING=0
+BEADS_GIT_HOOKS=0
+
+usage() {
+  cat <<'EOF'
+Usage: agent-init [options]
+
+Initialize the current Git repository for the shared agent workflow.
+
+Options:
+  --stealth             Keep Beads state local to this checkout.
+  --no-beads            Do not initialize or configure Beads.
+  --no-workmux-setup    Do not install workmux agent hooks/skills.
+  --no-tooling          Do not install mise tools or repository Git hooks.
+  --beads-git-hooks     Install Beads commit/push lifecycle hooks (opt-in).
+  -h, --help            Show this help.
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --stealth) STEALTH=1 ;;
+    --no-beads) SKIP_BEADS=1 ;;
+    --no-workmux-setup) SKIP_WORKMUX_SETUP=1 ;;
+    --no-tooling) SKIP_PROJECT_TOOLING=1 ;;
+    --beads-git-hooks) BEADS_GIT_HOOKS=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) printf 'error: unknown option: %s\n' "$1" >&2; usage; exit 2 ;;
+  esac
+  shift
+done
+
+if [[ "$STEALTH" -eq 1 && "$BEADS_GIT_HOOKS" -eq 1 ]]; then
+  printf 'error: --stealth and --beads-git-hooks cannot be combined\n' >&2
+  exit 2
+fi
+
+root="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  printf 'error: agent-init must run inside a Git repository\n' >&2
+  exit 1
+}
+cd "$root"
+
+if [[ "$SKIP_PROJECT_TOOLING" -eq 0 ]]; then
+  if [[ -f .mise.toml || -f mise.toml ]]; then
+    if command -v mise >/dev/null 2>&1; then
+      mise install
+    else
+      printf 'warning: mise config found but mise is not installed\n' >&2
+    fi
+  fi
+  if [[ -f lefthook.yml || -f lefthook.yaml ]]; then
+    if command -v mise >/dev/null 2>&1 && [[ -f .mise.toml || -f mise.toml ]]; then
+      mise exec -- lefthook install
+    elif command -v lefthook >/dev/null 2>&1; then
+      lefthook install
+    else
+      printf 'warning: Lefthook config found but lefthook is not installed\n' >&2
+    fi
+  fi
+fi
+
+if [[ "$SKIP_BEADS" -eq 0 ]]; then
+  command -v bd >/dev/null 2>&1 || {
+    printf 'error: bd is required; install the agent profile first\n' >&2
+    exit 1
+  }
+  bd_version="$(bd version 2>/dev/null | head -n 1)"
+  if [[ "$bd_version" == "bd version 0."* ]]; then
+    printf 'error: %s is obsolete; Beads 1.x is required (check for a stale /usr/local/bin/bd)\n' "$bd_version" >&2
+    exit 1
+  fi
+
+  if [[ ! -d .beads ]]; then
+    init_args=(init --skip-agents --skip-hooks)
+    [[ "$STEALTH" -eq 1 ]] && init_args+=(--stealth)
+    bd "${init_args[@]}"
+  fi
+
+  if [[ "$STEALTH" -eq 0 ]]; then
+    if [[ "$BEADS_GIT_HOOKS" -eq 1 ]]; then
+      bd hooks install
+    fi
+    command -v codex >/dev/null 2>&1 && bd setup codex
+    command -v claude >/dev/null 2>&1 && bd setup claude
+  fi
+fi
+
+if [[ "$SKIP_WORKMUX_SETUP" -eq 0 ]]; then
+  command -v workmux >/dev/null 2>&1 || {
+    printf 'error: workmux is required; install the agent profile first\n' >&2
+    exit 1
+  }
+  workmux setup
+fi
+
+printf '\nAgent workflow initialized in %s\n' "$root"
+if [[ "$SKIP_BEADS" -eq 0 ]]; then
+  printf 'Next: bd ready, then agent-new <bead-id>\n'
+else
+  printf 'Next: agent-new <branch> --prompt "objective and acceptance criteria"\n'
+fi

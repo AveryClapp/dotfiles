@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "${1:-}" in
+  --dashboard) exec workmux dashboard ;;
+  --last-done) exec workmux last-done ;;
+  --last-agent) exec workmux last-agent ;;
+  -h|--help)
+    printf 'Usage: agent-status [--dashboard|--last-done|--last-agent|workmux-list-options]\n'
+    exit 0
+    ;;
+esac
+
+command -v workmux >/dev/null 2>&1 || { printf 'error: workmux is not installed\n' >&2; exit 1; }
+printf 'Worktrees and agents\n'
+workmux list "$@"
+
+root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+if command -v bd >/dev/null 2>&1 && [[ -d "$root/.beads" ]]; then
+  printf '\nReady tasks\n'
+  bd ready --limit 10
+fi

@@ -1,0 +1,32 @@
+# Shared with the manual workstation; installed only by agent-workstation or
+# explicit --ghostty setup.
+font-family = JetBrainsMono Nerd Font
+font-size = 13
+theme = kanagawa-wave
+
+window-padding-x = 10
+window-padding-y = 10
+window-padding-balance = true
+window-inherit-working-directory = true
+tab-inherit-working-directory = true
+
+shell-integration = detect
+shell-integration-features = cursor,sudo,title,ssh-env,ssh-terminfo,path
+
+# Long agent/test commands notify only when this terminal is not focused.
+notify-on-command-finish = unfocused
+notify-on-command-finish-action = no-bell,notify
+notify-on-command-finish-after = 10s
+
+copy-on-select = clipboard
+clipboard-paste-protection = true
+confirm-close-surface = true
+scrollback-limit = 50000000
+
+quick-terminal-position = top
+quick-terminal-size = 45%
+quick-terminal-screen = mouse
+keybind = global:cmd+backquote=toggle_quick_terminal
+
+# Loaded last so host-specific values override shared defaults.
+config-file = ?~/.config/dotfiles/ghostty.local

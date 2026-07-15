@@ -6,6 +6,22 @@ A C++/Rust/Python development environment built on Neovim + Tmux + Bash with Kan
 
 ## Shell
 
+Sync repository changes to the active machine with `make sync`, or preview them
+with `make sync ARGS="--dry-run"`. Remote machines can use
+`make sync ARGS="--ssh"`. Put host-specific paths and helper functions in
+`~/.config/dotfiles/local.bash`; this file is sourced last and never overwritten.
+
+Run `dotfiles-doctor` after syncing to check completion, Git helpers, binary
+architecture, nested repositories, missing commands, and config drift.
+
+Agent hosts use `make agent-sync` or
+`make sync ARGS="--profile agent-workstation"`. Run `agent-doctor` after syncing.
+Use `--skill-pack all` during installation for the complete general, web,
+security, and research skill set. Config-only sync preserves installed external
+skills. Personal skills come from the separate sibling `../agent-skills` repo, are linked
+through `~/.agents/skills`, and are published to Claude and Codex. Existing
+client-specific skill directories are preserved.
+
 ### Aliases
 | Alias | Expands to |
 |-------|-----------|
@@ -17,6 +33,11 @@ A C++/Rust/Python development environment built on Neovim + Tmux + Bash with Kan
 | `gco` / `gb` | git checkout / git branch |
 | `lg` | lazygit |
 | `..` / `...` / `....` | cd up 1/2/3 levels |
+| `cd ...` / `cd ....` | cd up 2/3 levels, even when used as an argument |
+| `up 3` | cd up N levels |
+| `j <query>` / `ji` | zoxide jump / interactive zoxide jump |
+| `mkcd <dir>` | mkdir -p and cd into it |
+| `croot` | jump to the current git repo root |
 
 ### fzf Functions
 | Command | Action |
@@ -29,15 +50,15 @@ A C++/Rust/Python development environment built on Neovim + Tmux + Bash with Kan
 | `Ctrl+R` | Fuzzy search shell history |
 
 ### zoxide
-`z <partial>` — jump to any recently visited directory by fuzzy match. Replaces `cd` for anything beyond one level.
+`z <partial>` or `j <partial>` — jump to any recently visited directory by fuzzy match. `zi` / `ji` opens the interactive picker. Replaces manual long-path `cd` for anything beyond one level.
 
 ### bat
 `bat <file>` — syntax-highlighted file viewer. Automatically used as MANPAGER.
 
-### oh-my-bash plugins
-- **sudo** — double-tap `Esc` to prepend `sudo` to last command
-- **bashmarks** — `s name` to bookmark current dir, `g name` to jump to it, `l` to list all
-- **colored-man-pages** — man pages with syntax highlighting
+### Bash extras
+- **sudo toggle** — double-tap `Esc` to prepend or strip `sudo`
+- **smart cd** — `cd ...`, `cd ....`, `up 4`, `mkcd`, and `croot`
+- **fast fuzzy cd** — `fcd` uses `fd` without following symlink trees and skips heavy build/dependency dirs
 
 ### entr — file watcher
 Pipe a list of files into `entr` and it re-runs a command whenever any of them change. Uses `git ls-files` to watch only tracked files:
@@ -98,6 +119,29 @@ Agent starts once on first terminal open and persists via `~/.ssh/agent.env`. Ev
 ---
 
 ## Tmux
+
+### Agent Workflow
+
+The existing manual `prefix+w` flow remains available. Agent profiles add a
+parallel workmux flow:
+
+| Command / key | Action |
+|---|---|
+| `agent-init` | Initialize Beads without adding a Git pre-push hook |
+| `agent-init --beads-git-hooks` | Opt into Beads commit/push lifecycle hooks |
+| `agent-new <id>` / `prefix+W` | Claim a task and launch an isolated agent worktree |
+| `agent-status` / `prefix+g` | List worktrees or open the agent dashboard |
+| `agent-send %42 text` | Safely send literal text to a stable tmux pane ID |
+| `agent-review <branch>` | Launch an independent, non-editing review worktree |
+| `agent-land` | Run project checks, rebase-merge, and clean up |
+| `agent-gc` | Prune merged remote worktrees and stale Claude entries |
+| `just check` | Run the same deterministic verification contract used by agents |
+| `just security` | Scan tracked and untracked, non-ignored files for secrets |
+| `just hooks` | Install the staged-secret pre-commit hook; no pre-push hook |
+| `cass search QUERY --robot` | Search local history across coding agents |
+
+See [docs/agentic-engineering.md](docs/agentic-engineering.md) for profiles,
+Agent Mail coordination, shared skills, and the complete lifecycle.
 
 ### Sessionizer
 `prefix+f` — fuzzy-find any project under `~/Documents/Coding` and jump to a dedicated tmux session for it. If the session doesn't exist it's created with the working directory set to the project root. If it does exist you switch to it instantly.

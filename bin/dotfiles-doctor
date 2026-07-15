@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+set -u
+
+SCRIPT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT="${DOTFILES_ROOT:-}"
+if [[ -z "$ROOT" && -r "$HOME/.config/dotfiles/repo" ]]; then
+  read -r ROOT <"$HOME/.config/dotfiles/repo"
+fi
+if [[ -z "$ROOT" && -f "$SCRIPT_ROOT/setup_config.sh" ]]; then
+  ROOT="$SCRIPT_ROOT"
+fi
+WARNINGS=0
+
+ok() { printf '[ok]   %s\n' "$1"; }
+warn() { printf '[warn] %s\n' "$1"; WARNINGS=$((WARNINGS + 1)); }
+info() { printf '[info] %s\n' "$1"; }
+
+check_command() {
+  if command -v "$1" >/dev/null 2>&1; then
+    ok "$1: $(command -v "$1")"
+  else
+    warn "$1 is not installed"
+  fi
+}
+
+check_active_file() {
+  local source="$1" active="$2" label="$3"
+  if [[ ! -e "$active" ]]; then
+    warn "$label is not installed at $active"
+  elif cmp -s "$source" "$active"; then
+    ok "$label matches the repository"
+  else
+    warn "$label differs from the repository; run ./update.sh"
+  fi
+}
+
+check_architecture() {
+  [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]] || return
+  local command_name path description
+  for command_name in bash git gh tmux nvim rg fzf zoxide fd eza delta; do
+    path="$(command -v "$command_name" 2>/dev/null || true)"
+    [[ -n "$path" ]] || continue
+    description="$(file -L "$path" 2>/dev/null || true)"
+    if [[ "$description" == *x86_64* && "$description" != *arm64* ]]; then
+      warn "$command_name is Intel-only on Apple Silicon: $path"
+    else
+      ok "$command_name architecture matches Apple Silicon"
+    fi
+  done
+}
+
+check_git() {
+  local helpers nested completion
+  helpers="$(git config --show-origin --get-regexp '^credential\..*helper$|^credential\.helper$' 2>/dev/null || true)"
+  if [[ "$helpers" == *'/usr/local/bin/gh'* ]]; then
+    warn "Git credentials hardcode /usr/local/bin/gh; run 'gh auth setup-git' after installing native gh"
+  else
+    ok "Git credential helpers do not hardcode /usr/local/bin/gh"
+  fi
+
+  if [[ -n "$ROOT" && -d "$ROOT" ]]; then
+    nested="$(find "$ROOT" -mindepth 2 -type d -name .git -prune -print 2>/dev/null)"
+  else
+    nested=""
+  fi
+  if [[ -n "$nested" ]]; then
+    warn "nested Git metadata found: ${nested#"$ROOT"/}"
+  elif [[ -n "$ROOT" ]]; then
+    ok "no nested Git repositories found"
+  else
+    warn "repository location is unknown; rerun ./update.sh"
+  fi
+
+  completion="$(SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-/dev/null}" bash --noprofile --rcfile "$HOME/.bashrc" -i -c 'complete -p git; complete -p gco' 2>/dev/null || true)"
+  if [[ "$completion" == *'_fzf_path_completion'* ]]; then
+    warn "fzf is overriding Git completion in the active shell config"
+  elif [[ "$completion" == *'_git'* || "$completion" == *'__git_wrap'* ]]; then
+    ok "Git and gco use context-aware completion"
+  else
+    warn "Git completion could not be verified; reload with 'exec bash'"
+  fi
+}
+
+main() {
+  printf 'Dotfiles doctor\n\n'
+
+  for command_name in bash git tmux nvim rg fzf zoxide fd eza delta; do
+    if [[ "$command_name" == fd ]] && ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+      ok "fd: $(command -v fdfind) (fdfind compatibility mode)"
+    else
+      check_command "$command_name"
+    fi
+  done
+
+  printf '\n'
+  check_architecture
+  check_git
+
+  printf '\n'
+  if [[ -n "$ROOT" && -d "$ROOT" ]]; then
+    check_active_file "$ROOT/bashrc" "$HOME/.bashrc" bashrc
+    check_active_file "$ROOT/aliases" "$HOME/.aliases" aliases
+    check_active_file "$ROOT/gitconfig" "$HOME/.gitconfig" gitconfig
+    info "repository: $ROOT"
+  fi
+
+  if [[ -r "$HOME/.config/dotfiles/local.bash" ]]; then
+    info "machine-local overrides: $HOME/.config/dotfiles/local.bash"
+  else
+    info "no machine-local overrides (optional)"
+  fi
+
+  if [[ -r "$HOME/.config/workmux/config.yaml" ]]; then
+    printf '\nAgent profile\n'
+    if [[ -n "${PERSONAL_SKILLS_DIR:-}" ]]; then
+      personal_skills_dir="$PERSONAL_SKILLS_DIR"
+    elif [[ -n "$ROOT" && -d "$ROOT/.." ]]; then
+      personal_skills_dir="$(cd "$ROOT/.." && pwd)/agent-skills"
+    else
+      personal_skills_dir="$HOME/Documents/Coding/GitProjects/agent-skills"
+    fi
+    for command_name in workmux bd dcg am; do
+      check_command "$command_name"
+    done
+    if [[ -d "$personal_skills_dir/.git" ]]; then
+      ok "personal skill repository: $personal_skills_dir"
+    else
+      warn "personal skill repository is missing: $personal_skills_dir"
+    fi
+    for skill_name in agentic-engineering dotfiles-maintenance; do
+      skill_source="$personal_skills_dir/skills/$skill_name"
+      skill_catalog="$HOME/.agents/skills/$skill_name"
+      if [[ -L "$skill_catalog" && "$(readlink "$skill_catalog")" == "$skill_source" ]]; then
+        ok "shared $skill_name skill points to ../agent-skills"
+      else
+        warn "shared $skill_name skill is not linked to ../agent-skills; run make agent-sync"
+      fi
+    done
+  fi
+
+  printf '\n'
+  if [[ "$WARNINGS" -eq 0 ]]; then
+    printf 'All checks passed.\n'
+  else
+    printf '%d warning(s) found.\n' "$WARNINGS"
+  fi
+}
+
+main "$@"

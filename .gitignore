@@ -50,3 +50,17 @@ node_modules/
 
 # Custom
 .netrwhist
+mise.local.toml
+mise.local.lock
+.tmux-check.sock
+gitleaks-report.*
+/.agents/
+/skills-lock.json
+agy.mcp.json
+codex.mcp.json
+cursor.mcp.json
+factory.mcp.json
+gemini.mcp.json
+.codex/config.toml
+.vscode/mcp.json
+windsurf.mcp.json
