@@ -15,11 +15,15 @@ control which additional programs and configuration are installed.
 
 `--agent` is composable with the existing profiles. For example,
 `--profile ssh --agent` adds the agent layer to an SSH installation. `--ghostty`
-adds Ghostty without removing Alacritty.
+adds Ghostty without removing Alacritty. `--ntm` implies `--agent` and installs
+Named Tmux Manager without making it the task or worktree owner.
 
 ```bash
 # Headless or SSH host
 ./setup_config.sh --profile agent
+
+# Headless host with the optional NTM operator layer
+./setup_config.sh --profile agent --ntm
 
 # Local workstation, preserving the existing manual environment
 ./setup_config.sh --profile agent-workstation
@@ -35,8 +39,10 @@ adds Ghostty without removing Alacritty.
 ```
 
 Agent profiles install Beads, workmux, Destructive Command Guard, and MCP Agent
-Mail. They also install CASS, ast-grep, gitleaks, Lefthook, just, mise, language
-servers, and the focused Claude plugin set when Claude is present. Use
+Mail. Pass `--ntm` to add fleet dashboards, activity inspection, pane control,
+and robot output through NTM. Profiles also install CASS, ast-grep, gitleaks,
+Lefthook, just, mise, language servers, and the focused Claude plugin set when
+Claude is present. Use
 `--skip-agent-mail`, `--skip-dcg`, `--skip-personal-skills`, or
 `--skip-claude-plugins` to omit an integration.
 
@@ -76,6 +82,7 @@ Beads task
   -> agent-new
   -> workmux worktree + tmux window
   -> Codex or Claude
+  -> optional NTM observation and pane control
   -> checks + independent review
   -> explicit agent-land
 ```
@@ -83,7 +90,9 @@ Beads task
 Beads is the centralized control plane and owns tasks, bugs, priorities,
 dependencies, follow-ups, and durable project memory. Workmux owns worktree and
 tmux lifecycle. Agent Mail owns messages and advisory file reservations. Git
-owns source history. The identifier should match across all four systems.
+owns source history. NTM is an optional operator surface over tmux; it does not
+introduce a second task graph or bypass workmux isolation. The identifier should
+match across all coordination systems.
 
 ## First Project Setup
 
@@ -263,6 +272,55 @@ The original manual workflow remains available:
 workmux status is included in the existing window format. The tmux status poll is
 five seconds rather than one second to keep idle fleet overhead modest.
 
+## NTM Operator Layer
+
+Install NTM explicitly; it is not part of the default agent profile:
+
+```bash
+./setup_config.sh --profile agent --ntm
+agent ntm deps -v
+```
+
+The dotfiles cache only `ntm completion bash`; they deliberately do not source
+`ntm shell bash`, because upstream shell integration currently defines aliases
+that bypass Claude and Codex safety controls. The upstream installer runs
+without modifying shell startup files. The `agent-ntm` wrapper restores common
+user-space binary paths and pins NTM to the active tmux binary, which matters on
+machines with multiple Homebrew prefixes.
+
+Use NTM first for visibility and operator control:
+
+```bash
+agent ntm list
+agent ntm status <session>
+agent ntm dashboard <session>
+agent ntm activity <session>
+agent ntm --robot-snapshot
+```
+
+Beads remains authoritative for task assignment and durable memory. Workmux
+continues to create, land, and clean up one worktree per agent. Do not use
+`ntm quick`, `ntm spawn`, `ntm add`, `ntm assign`, pipelines, or checkpoints for
+Beads-driven work unless the repository explicitly adopts an
+isolation-compatible NTM workflow. Project-scoped NTM state lives in `.ntm/` and
+should not be committed accidentally.
+
+The managed `agent/ntm.toml` removes every upstream agent-launch bypass flag,
+enables NTM's paranoid safety and privacy modes, disables automatic checkpoints
+and file reservations, and prevents automatic agent restarts. This keeps NTM
+observational by default while still allowing explicit operator actions.
+
+On Apple Silicon, `agent doctor` warns when both Intel Homebrew tmux under
+`/usr/local` and native Homebrew tmux under `/opt/homebrew` are linked. NTM
+currently checks `/usr/local` first, which can connect with the wrong client.
+If the Intel tmux package is no longer needed on `PATH`, unlink it without
+uninstalling it:
+
+```bash
+arch -x86_64 /usr/local/bin/brew unlink tmux
+# Reversible with: arch -x86_64 /usr/local/bin/brew link tmux
+```
+
 ## Shared Instructions And Skills
 
 Personal skill source is the separate Git repository:
@@ -271,12 +329,20 @@ Personal skill source is the separate Git repository:
 ../agent-skills/skills/
 ```
 
-Setup clones it only when the sibling repo is absent; it never auto-pulls or
-overwrites local skill edits. Install and sync link every personal skill into the
-shared `~/.agents/skills` catalog, then publish that catalog under
+Setup clones it when absent and fast-forwards it when the checkout is clean.
+Local edits or divergent history are preserved and produce a warning instead of
+being reset, stashed, or overwritten. Install and sync link every personal skill
+into the shared `~/.agents/skills` catalog, then publish that catalog under
 `~/.claude/skills` and `~/.codex/skills`. Existing non-symlink client-specific
 skills are preserved. List or update third-party skills with `npx skills list -g`
 and `npx skills update -g`.
+
+The `agentic-engineering` skill is the detailed operating protocol shared by
+Claude and Codex. Its trigger description covers Beads work, delegation,
+parallel agents, workmux, Agent Mail, tmux/NTM supervision, review, and landing.
+`agent init` also installs the concise ownership rules into each project's
+`AGENTS.md` and `CLAUDE.md`, so Beads remains authoritative even when a client
+does not activate the skill automatically.
 
 Claude Code receives Pyright, TypeScript, and Lua language servers and their LSP
 plugins, plus skill-creator and the PR review toolkit. `plugin-dev` is installed
@@ -324,6 +390,7 @@ is first used. Ghostty is not installed by the CLI-only agent profile.
 
 - [Beads](https://github.com/gastownhall/beads)
 - [workmux](https://github.com/raine/workmux)
+- [Named Tmux Manager](https://github.com/Dicklesworthstone/ntm)
 - [MCP Agent Mail](https://github.com/Dicklesworthstone/mcp_agent_mail_rust)
 - [Destructive Command Guard](https://github.com/Dicklesworthstone/destructive_command_guard)
 - [Agent Skills](https://agentskills.io/specification)

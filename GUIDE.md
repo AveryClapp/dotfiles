@@ -133,6 +133,7 @@ parallel workmux flow:
 | `agent-new <id>` / `prefix+W` | Claim a task and launch an isolated agent worktree |
 | `bd create "Bug: ..." -t bug` | Immediately record a discovered defect in the central task graph |
 | `agent-status` / `prefix+g` | List worktrees or open the agent dashboard |
+| `agent ntm ...` | Use the optional NTM fleet dashboard and pane operator commands |
 | `agent-send %42 text` | Safely send literal text to a stable tmux pane ID |
 | `agent-review <branch>` | Launch an independent, non-editing review worktree |
 | `agent-land` | Run project checks, rebase-merge, and clean up |

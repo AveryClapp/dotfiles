@@ -65,6 +65,30 @@ else
   info 'agent-browser is installed by the optional web skill pack'
 fi
 
+if command -v ntm >/dev/null 2>&1; then
+  if ntm version >/dev/null 2>&1; then
+    ok "NTM: $(ntm version 2>/dev/null | head -n 1)"
+  else
+    warn 'NTM is installed but cannot execute'
+  fi
+  ntm_config="$HOME/.config/ntm/config.toml"
+  if [[ ! -r "$ntm_config" ]]; then
+    warn 'NTM safe config is missing; rerun the agent profile sync'
+  elif grep -Eq -- 'dangerously-(skip|bypass)|--yolo|--always-approve' "$ntm_config"; then
+    warn 'NTM config contains an agent approval or sandbox bypass'
+  elif ntm --config "$ntm_config" config validate >/dev/null 2>&1; then
+    ok 'NTM safe config is installed and valid'
+  else
+    warn 'NTM safe config did not validate'
+  fi
+  if [[ "$(uname -s)" == Darwin && "$(uname -m)" == arm64 \
+    && -x /usr/local/bin/tmux && -x /opt/homebrew/bin/tmux ]]; then
+    warn 'NTM may select legacy /usr/local/bin/tmux before native Homebrew tmux'
+  fi
+else
+  info 'NTM is optional; install it with dotfiles setup --ntm'
+fi
+
 if command -v ghostty >/dev/null 2>&1; then
   ok "Ghostty: $(command -v ghostty)"
 elif [[ -d /Applications/Ghostty.app ]]; then
@@ -82,10 +106,16 @@ fi
 if [[ -d "$PERSONAL_SKILLS_DIR/.git" ]]; then
   ok "personal skill repository: $PERSONAL_SKILLS_DIR"
   personal_skills_remote="$(git -C "$PERSONAL_SKILLS_DIR" remote get-url origin 2>/dev/null || true)"
-  if [[ "$personal_skills_remote" == "https://github.com/AveryClapp/agent-skills.git" ]]; then
+  case "$personal_skills_remote" in
+    https://github.com/AveryClapp/agent-skills|https://github.com/AveryClapp/agent-skills.git|git@github.com:AveryClapp/agent-skills.git|ssh://git@github.com/AveryClapp/agent-skills.git)
     ok 'personal skill repository origin is configured'
+    ;;
+    *) warn 'personal skill repository origin is missing or unexpected' ;;
+  esac
+  if [[ -n "$(git -C "$PERSONAL_SKILLS_DIR" status --porcelain 2>/dev/null)" ]]; then
+    warn 'personal skill repository has local changes; setup will not auto-update it'
   else
-    warn "personal skill repository origin is unexpected: ${personal_skills_remote:-missing}"
+    ok 'personal skill repository is clean and can be fast-forwarded by setup'
   fi
 else
   warn "personal skill repository is missing: $PERSONAL_SKILLS_DIR"
@@ -107,7 +137,11 @@ for skill_name in agentic-engineering dotfiles-maintenance; do
   fi
 done
 if [[ -r "$HOME/.agents/skills/agentic-engineering/SKILL.md" ]]; then
-  ok 'canonical agentic-engineering skill installed'
+  if grep -q '^## Operate With NTM$' "$HOME/.agents/skills/agentic-engineering/SKILL.md"; then
+    ok 'canonical agentic-engineering skill includes NTM guidance'
+  else
+    warn 'canonical agentic-engineering skill lacks NTM guidance; refresh ../agent-skills'
+  fi
 else
   warn 'shared agent skill is missing'
 fi

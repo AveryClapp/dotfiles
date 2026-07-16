@@ -130,6 +130,12 @@ main() {
     for command_name in workmux bd dcg am; do
       check_command "$command_name"
     done
+    if command -v ntm >/dev/null 2>&1; then
+      check_command ntm
+      check_active_file "$ROOT/agent/ntm.toml" "$HOME/.config/ntm/config.toml" 'NTM safe config'
+    else
+      info 'ntm is optional; install it with setup_config.sh --ntm'
+    fi
     if [[ -d "$personal_skills_dir/.git" ]]; then
       ok "personal skill repository: $personal_skills_dir"
     else

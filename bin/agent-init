@@ -50,6 +50,13 @@ dependencies, follow-ups, and durable project memory.
   `--deps discovered-from:<current-id>` when another Bead led to the discovery.
 - Create child Beads before dispatching independent agents.
 - Do not maintain a competing markdown or agent-local task list.
+- Use the shared `agentic-engineering` skill for the complete coordination
+  protocol. Workmux owns isolated worktrees and branch lifecycle; Agent Mail
+  owns messages and advisory reservations.
+- NTM is an optional operator surface for tmux visibility, dashboards, activity,
+  health, pane messaging, and robot snapshots. It does not replace Beads or
+  workmux. Do not use NTM spawning, assignment, pipelines, or checkpoints for
+  Beads-driven work unless the repository explicitly adopts a compatible model.
 <!-- END DOTFILES BEADS CONTROL PLANE -->
 EOF
   cat "$tmp" >"$file"

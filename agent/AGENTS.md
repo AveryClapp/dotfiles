@@ -36,6 +36,18 @@ with the narrowest relevant checks before reporting completion.
   the implementation under review. Reviewers create bug Beads for actionable
   defects before reporting them.
 
+## NTM Operator Layer
+
+- Consult the shared `agentic-engineering` skill before substantial coordinated
+  work, delegation, independent review, or multi-agent operation.
+- When NTM is installed, use it for named tmux session visibility, dashboards,
+  activity checks, pane messaging, and machine-readable operator snapshots.
+- Beads remains the task and memory control plane. Do not duplicate tasks in NTM
+  pipelines, checkpoints, or private agent state.
+- workmux remains responsible for one-worktree-per-agent creation, branch landing,
+  and cleanup. Do not use NTM spawning or assignment commands for Beads work unless
+  the operator or repository explicitly adopts an isolation-compatible workflow.
+
 ## Safety And Verification
 
 - Do not disable sandboxing or approval checks by default.

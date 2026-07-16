@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Detached tmux and SSH shells do not always inherit user-space agent paths.
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$HOME/.npm-global/bin:$PATH"
+if [[ -z "${NTM_TMUX_BINARY:-}" ]]; then
+  NTM_TMUX_BINARY="$(command -v tmux 2>/dev/null || true)"
+  export NTM_TMUX_BINARY
+fi
+
+command -v ntm >/dev/null 2>&1 || {
+  printf 'error: ntm is not installed; rerun dotfiles setup with --ntm\n' >&2
+  exit 1
+}
+
+exec ntm "$@"

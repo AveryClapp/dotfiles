@@ -67,6 +67,7 @@ SKIP_RUST=0
 SKIP_TPM=0
 AGENT_TOOLS=0
 INSTALL_GHOSTTY=0
+INSTALL_NTM=0
 SKIP_AGENT_MAIL=0
 SKIP_DCG=0
 SKIP_CLAUDE_PLUGINS=0
@@ -77,6 +78,7 @@ PERSONAL_SKILLS_REPO="${PERSONAL_SKILLS_REPO:-https://github.com/AveryClapp/agen
 PERSONAL_SKILLS_DIR="${PERSONAL_SKILLS_DIR:-$(cd "$DOTFILES_DIR/.." && pwd)/agent-skills}"
 AGENT_MAIL_INSTALLER_URL="https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail_rust/main/install.sh"
 AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION="${AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION:-v0.3.10}"
+NTM_INSTALLER_URL="https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh"
 
 ################################################################################
 # Utility Functions
@@ -88,6 +90,16 @@ print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 print_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
 
 command_exists() { command -v "$1" &>/dev/null; }
+
+normalize_git_remote() {
+    local remote="${1%/}"
+    remote="${remote%.git}"
+    case "$remote" in
+        git@github.com:*) remote="https://github.com/${remote#git@github.com:}" ;;
+        ssh://git@github.com/*) remote="https://github.com/${remote#ssh://git@github.com/}" ;;
+    esac
+    printf '%s\n' "$remote"
+}
 
 skill_pack_enabled() {
     local requested="$1" pack
@@ -143,6 +155,8 @@ Profiles:
 
 Options:
   --agent               Add agent tooling to the selected full/ssh profile.
+  --ntm                 Install Named Tmux Manager as an optional operator layer.
+                        Implies --agent; Beads and workmux remain authoritative.
   --ghostty             Install and sync Ghostty without removing Alacritty.
   --skip-agent-mail     Skip MCP Agent Mail installation.
   --skip-dcg            Skip Destructive Command Guard installation.
@@ -186,6 +200,10 @@ parse_args() {
                 ;;
             --agent)
                 AGENT_TOOLS=1
+                ;;
+            --ntm)
+                AGENT_TOOLS=1
+                INSTALL_NTM=1
                 ;;
             --ghostty)
                 INSTALL_GHOSTTY=1
@@ -326,7 +344,7 @@ validate_source_files() {
         required_files+=("alacritty.toml")
     fi
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        required_files+=("agent/AGENTS.md" "agent/workmux.yaml")
+        required_files+=("agent/AGENTS.md" "agent/workmux.yaml" "agent/ntm.toml")
     fi
 
     for file in "${required_files[@]}"; do
@@ -854,6 +872,30 @@ install_agent_mail() {
     fi
 }
 
+install_ntm() {
+    [[ "$INSTALL_NTM" -eq 1 ]] || return
+
+    if command_exists ntm && ntm version >/dev/null 2>&1; then
+        print_info "Refreshing Named Tmux Manager: $(ntm version 2>/dev/null | head -n 1)"
+    else
+        print_info "Installing Named Tmux Manager in user space..."
+    fi
+
+    mkdir -p "$HOME/.local/bin"
+    run_user_installer \
+        "${NTM_INSTALLER_URL}?$(date +%s)" \
+        "--dir=$HOME/.local/bin" --no-shell \
+        || print_warning "Could not install Named Tmux Manager"
+
+    export PATH="$HOME/.local/bin:$PATH"
+    hash -r
+    if command_exists ntm && ntm version >/dev/null 2>&1; then
+        print_success "Named Tmux Manager installed: $(ntm version 2>/dev/null | head -n 1)"
+    else
+        print_warning "Named Tmux Manager is not executable; rerun setup with --ntm"
+    fi
+}
+
 mise_use_global() {
     command_exists mise || {
         print_warning "mise is required to install user-space agent tools"
@@ -952,6 +994,26 @@ install_personal_skills_repo() {
     [[ "$AGENT_TOOLS" -eq 1 && "$SKIP_PERSONAL_SKILLS" -eq 0 ]] || return
     if [[ -d "$PERSONAL_SKILLS_DIR/.git" ]]; then
         print_info "Personal skills repo already present: $PERSONAL_SKILLS_DIR"
+        if [[ "$SKIP_PACKAGES" -eq 1 ]]; then
+            print_info "Skipping personal skills update (--skip-packages)"
+            return
+        fi
+        if [[ -n "$(git -C "$PERSONAL_SKILLS_DIR" status --porcelain)" ]]; then
+            print_warning "Personal skills repo has local changes; preserving it without pulling"
+            return
+        fi
+        local personal_skills_remote
+        personal_skills_remote="$(git -C "$PERSONAL_SKILLS_DIR" remote get-url origin 2>/dev/null || true)"
+        if [[ -z "$personal_skills_remote" \
+            || "$(normalize_git_remote "$personal_skills_remote")" != "$(normalize_git_remote "$PERSONAL_SKILLS_REPO")" ]]; then
+            print_warning "Personal skills origin is unexpected; preserving it without pulling"
+            return
+        fi
+        if git -C "$PERSONAL_SKILLS_DIR" pull --ff-only; then
+            print_success "Personal skills repo is current"
+        else
+            print_warning "Could not fast-forward personal skills; preserving the existing checkout"
+        fi
         return
     fi
     if [[ -e "$PERSONAL_SKILLS_DIR" ]]; then
@@ -1053,6 +1115,8 @@ install_agent_tools() {
     if [[ "$SKIP_AGENT_MAIL" -eq 0 ]]; then
         install_agent_mail
     fi
+
+    install_ntm
 
     if ! command_exists codex && ! command_exists claude; then
         print_warning "No coding agent found; install Codex or Claude Code before using workmux"
@@ -1273,6 +1337,7 @@ backup_configs() {
         "$HOME/.config/alacritty"
         "$HOME/.config/ghostty"
         "$HOME/.config/workmux"
+        "$HOME/.config/ntm"
         "$HOME/.config/taskwarrior-tui"
         "$HOME/.config/clangd"
         "$HOME/.agents/skills/agentic-engineering"
@@ -1399,7 +1464,7 @@ copy_configs() {
     chmod +x ~/.local/bin/dotfiles-doctor
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
         local agent_script
-        for agent_script in agent agent-init agent-new agent-send agent-capture agent-status agent-check agent-review agent-land agent-gc agent-doctor; do
+        for agent_script in agent agent-init agent-new agent-send agent-capture agent-status agent-check agent-review agent-land agent-gc agent-doctor agent-ntm; do
             cp "bin/$agent_script" "$HOME/.local/bin/$agent_script"
             chmod +x "$HOME/.local/bin/$agent_script"
         done
@@ -1426,8 +1491,9 @@ copy_configs() {
     fi
 
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        mkdir -p ~/.config/workmux ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.config/dotfiles
+        mkdir -p ~/.config/workmux ~/.config/ntm ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.config/dotfiles
         cp agent/workmux.yaml ~/.config/workmux/config.yaml
+        cp agent/ntm.toml ~/.config/ntm/config.toml
         publish_personal_skill_links
         publish_shared_skill_links
         if [[ ! -e ~/.config/dotfiles/agent.local.md ]]; then
@@ -1440,7 +1506,7 @@ copy_configs() {
                 cat ~/.config/dotfiles/agent.local.md
             fi
         } >~/.codex/AGENTS.md
-        print_success "agent config → workmux, shared Claude/Codex skills, and ~/.codex/AGENTS.md"
+        print_success "agent config → workmux, NTM, shared Claude/Codex skills, and ~/.codex/AGENTS.md"
     fi
 
     # Neovim
@@ -1525,8 +1591,11 @@ main() {
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
         if [[ "$SKIP_PACKAGES" -eq 0 ]]; then
             echo "  8. Install Beads, workmux, Agent Mail, DCG, agent CLIs, and workflow commands"
+            if [[ "$INSTALL_NTM" -eq 1 ]]; then
+                echo "     NTM: operator dashboard and pane control; workmux keeps worktree ownership"
+            fi
             if [[ "$SKIP_PERSONAL_SKILLS" -eq 0 ]]; then
-                echo "     Personal skills: $PERSONAL_SKILLS_REPO -> $PERSONAL_SKILLS_DIR"
+                echo "     Personal skills: clone or clean fast-forward $PERSONAL_SKILLS_REPO -> $PERSONAL_SKILLS_DIR"
             fi
             echo "     Skill packs: ${SKILL_PACKS[*]:-none}"
             if [[ "$SKIP_CLAUDE_PLUGINS" -eq 0 ]]; then
@@ -1602,6 +1671,10 @@ main() {
         echo "  $next_step. Run 'agent doctor', then run 'agent init' inside projects that should use Beads"
         next_step=$((next_step + 1))
         echo "  $next_step. Confirm Agent Mail with 'am service status'"
+        if [[ "$INSTALL_NTM" -eq 1 ]]; then
+            next_step=$((next_step + 1))
+            echo "  $next_step. Confirm NTM integrations with 'agent ntm deps -v'"
+        fi
     fi
     echo ""
 

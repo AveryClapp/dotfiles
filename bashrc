@@ -22,6 +22,11 @@ fi
 # ── PATH ───────────────────────────────────────────────────────────────────────
 export PATH="$HOME/.local/bin:$PATH"
 [[ -d "${HOMEBREW_PREFIX:-}/opt/llvm/bin" ]] && export PATH="$HOMEBREW_PREFIX/opt/llvm/bin:$PATH"
+if [[ -z "${NTM_TMUX_BINARY:-}" ]]; then
+  _ntm_tmux_binary="$(type -P tmux 2>/dev/null || true)"
+  [[ -n "$_ntm_tmux_binary" ]] && export NTM_TMUX_BINARY="$_ntm_tmux_binary"
+  unset _ntm_tmux_binary
+fi
 
 # ── Environment ────────────────────────────────────────────────────────────────
 if [[ -n "${HOMEBREW_PREFIX:-}" ]]; then
@@ -151,15 +156,31 @@ _cached_eval pip3 completion --bash
 _cached_eval workmux completions bash
 _cached_eval just --completions bash
 _cached_eval cass completions bash
+_cached_eval ntm completion bash
 
 _agent_complete() {
   local current match
   current="${COMP_WORDS[COMP_CWORD]}"
   COMPREPLY=()
+  if [[ "${COMP_WORDS[1]:-}" == ntm && "$COMP_CWORD" -ge 2 ]] \
+    && declare -F __start_ntm >/dev/null 2>&1; then
+    local saved_line="${COMP_LINE:-}" saved_point="${COMP_POINT:-0}" saved_cword="$COMP_CWORD"
+    local -a saved_words=("${COMP_WORDS[@]}")
+    COMP_WORDS=("${COMP_WORDS[@]:1}")
+    COMP_CWORD=$((COMP_CWORD - 1))
+    COMP_LINE="${COMP_LINE#agent }"
+    COMP_POINT=$((COMP_POINT - 6))
+    __start_ntm
+    COMP_WORDS=("${saved_words[@]}")
+    COMP_CWORD="$saved_cword"
+    COMP_LINE="$saved_line"
+    COMP_POINT="$saved_point"
+    return
+  fi
   if [[ "$COMP_CWORD" -eq 1 ]]; then
     while IFS= read -r match; do
       COMPREPLY+=("$match")
-    done < <(compgen -W 'init new send capture status dashboard check review land gc doctor help' -- "$current")
+    done < <(compgen -W 'init new send capture status dashboard ntm check review land gc doctor help' -- "$current")
   fi
 }
 complete -F _agent_complete agent

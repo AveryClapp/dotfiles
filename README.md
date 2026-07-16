@@ -12,6 +12,7 @@ Personal development environment with a unified Kanagawa Wave theme. Built for C
 | **Alacritty** | GPU-accelerated terminal |
 | **Ghostty** | Agent-workstation terminal with shell integration and notifications |
 | **Beads + workmux** | Agent task graph, isolated worktrees, and tmux lifecycle |
+| **NTM** | Optional named-session dashboard and multi-agent operator interface |
 | **mise + just** | Pinned project tools and one human/agent verification contract |
 | **CASS + ast-grep** | Cross-agent history search and structural code search |
 
@@ -40,6 +41,7 @@ For the additive agentic engineering environment:
 ```bash
 ./setup_config.sh --profile agent              # CLI/SSH host
 ./setup_config.sh --profile agent-workstation  # full setup + Ghostty
+./setup_config.sh --profile agent --ntm        # add NTM on an SSH/CLI host
 ./setup_config.sh --profile agent-workstation --skill-pack all
 ```
 
@@ -53,6 +55,12 @@ Codex. Tasks, discovered bugs, dependencies, follow-ups, and child-agent work al
 receive Bead IDs; workmux and Agent Mail use those IDs for execution and
 coordination. Run `agent init` in new or existing repositories; rerunning it
 refreshes managed integration blocks while preserving project-specific guidance.
+
+NTM is opt-in with `--ntm`. It adds fleet visibility, activity inspection,
+dashboards, and pane controls without replacing Beads or workmux. Use
+`agent ntm deps -v` to verify integrations and `agent ntm --help` to inspect its
+operator commands. `agent new`, `agent land`, and `agent gc` continue to enforce
+the isolated worktree lifecycle.
 
 Agent profiles install the portable `general` skill pack by default. Add
 `--skill-pack web`, `security`, or `research` as needed; the option is
@@ -103,7 +111,10 @@ exec bash
 Personal skills are authored in the separate sibling `../agent-skills` Git repository.
 Agent sync links them into the shared `~/.agents/skills` catalog, then publishes
 the catalog to Claude and Codex. Third-party skill packs remain upstream-managed,
-and existing non-symlink client-specific skills are preserved.
+and existing non-symlink client-specific skills are preserved. Agent setup
+fast-forwards a clean personal-skills checkout before publishing it. Local edits,
+detached heads, and divergent branches are preserved and reported for manual
+resolution rather than reset or stashed.
 
 `make update` is intentionally broader: it pulls the repository, syncs config,
 then updates Neovim and Doom packages. Run `dotfiles-doctor` (or `make doctor`)
@@ -126,7 +137,7 @@ alacritty.toml                  # terminal config
 bin/tmux-sessionizer            # project session switcher (prefix+f)
 bin/tmux-worktree               # git worktree + session switcher (prefix+w)
 bin/dotfiles-doctor             # shell, Git, architecture, and config checks
-bin/agent, bin/agent-*          # agent dispatcher plus workflow commands
+bin/agent, bin/agent-*          # agent dispatcher, workmux lifecycle, NTM access
 agent/                          # workmux defaults and global agent guidance
 ghostty/                        # optional agent-workstation terminal config
 .mise.toml                      # pinned repository development tools

@@ -12,6 +12,7 @@ Commands:
   capture    Capture recent output from a tmux pane.
   status     Show active worktrees and agents.
   dashboard Open the workmux agent dashboard.
+  ntm        Run the optional NTM operator interface.
   check      Run the repository verification contract.
   review     Launch an independent review worktree.
   land       Verify and explicitly land an agent branch.
@@ -33,7 +34,7 @@ case "$command_name" in
   dashboard)
     exec agent-status --dashboard "$@"
     ;;
-  init|new|send|capture|status|check|review|land|gc|doctor)
+  init|new|send|capture|status|check|review|land|gc|doctor|ntm)
     exec "agent-$command_name" "$@"
     ;;
   *)
