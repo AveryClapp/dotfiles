@@ -234,7 +234,8 @@ only after confirming the repository does not rely on them for Beads sync.
 The agent profile installs a localhost user service and synchronizes the MCP
 client entries for detected agents. It prefers port `8765`, selects another
 local port when that port is occupied, and records the choice in
-`~/.config/dotfiles/agent-mail-port`. On SSH or container hosts where native
+`~/.config/dotfiles/agent-mail-port` and the Agent Mail CLI configuration. On SSH or
+container hosts where native
 user services are unavailable, it runs the server in a persistent tmux session
 named `agent-mail-service`.
 

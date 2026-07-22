@@ -1239,7 +1239,9 @@ configure_agent_mail() {
 
     mkdir -p "$(dirname "$port_file")"
     printf '%s\n' "$port" >"$port_file"
-    print_info "Synchronizing Agent Mail MCP clients..."
+    print_info "Synchronizing Agent Mail CLI and MCP clients..."
+    am config set-port "$port" \
+        || print_warning "Agent Mail CLI port configuration needs attention; run 'am config set-port $port'"
     am setup run --yes --no-hooks --host 127.0.0.1 --port "$port" --project-dir "$HOME" \
         || print_warning "Agent Mail MCP client setup needs attention; run 'am setup status'"
     print_success "Agent Mail is ready on 127.0.0.1:$port"
