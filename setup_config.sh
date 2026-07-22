@@ -1191,6 +1191,7 @@ configure_agent_mail() {
     }
 
     local port_file="$HOME/.config/dotfiles/agent-mail-port"
+    local cli_env_file="$HOME/.config/mcp-agent-mail/config.env"
     local preferred_port="8765" port="" candidate
     if [[ -r "$port_file" ]]; then
         read -r preferred_port <"$port_file"
@@ -1237,11 +1238,11 @@ configure_agent_mail() {
         return
     fi
 
-    mkdir -p "$(dirname "$port_file")"
+    mkdir -p "$(dirname "$port_file")" "$(dirname "$cli_env_file")"
     printf '%s\n' "$port" >"$port_file"
     print_info "Synchronizing Agent Mail CLI and MCP clients..."
-    am config set-port "$port" \
-        || print_warning "Agent Mail CLI port configuration needs attention; run 'am config set-port $port'"
+    am config set-port --env-file "$cli_env_file" "$port" \
+        || print_warning "Agent Mail CLI port configuration needs attention; run 'am config set-port --env-file $cli_env_file $port'"
     am setup run --yes --no-hooks --host 127.0.0.1 --port "$port" --project-dir "$HOME" \
         || print_warning "Agent Mail MCP client setup needs attention; run 'am setup status'"
     print_success "Agent Mail is ready on 127.0.0.1:$port"

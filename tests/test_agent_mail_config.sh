@@ -27,7 +27,10 @@ agent_mail_endpoint_healthy() {
 
 configure_agent_mail >/dev/null
 
-config_line="$(grep -nFx 'config set-port 8766' "$call_log" | cut -d: -f1)"
+config_line="$(
+    grep -nFx "config set-port --env-file $HOME/.config/mcp-agent-mail/config.env 8766" "$call_log" \
+        | cut -d: -f1
+)"
 setup_line="$(grep -nF 'setup run --yes --no-hooks --host 127.0.0.1 --port 8766' "$call_log" | cut -d: -f1)"
 
 [[ -n "$config_line" ]]
