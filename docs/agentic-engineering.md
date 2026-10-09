@@ -107,6 +107,11 @@ by default:
 
 DCG is a guardrail, not a security boundary. It can stop a risky command before
 the agent shell runs it, but it does not replace sandboxing, review, or backups.
+`agent/dcg.toml` syncs to `~/.config/dcg/config.toml` and holds narrow
+exceptions for safe commands DCG would otherwise block, such as taking one side
+of a merge conflict or deleting a single folder under `~/.cache`. Check a
+change with `dcg test '<command>'` before syncing it; `dcg test` ignores the
+`[policy]` table, which only applies when DCG runs as a hook.
 
 Inspect or exercise hooks without pushing:
 

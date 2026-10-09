@@ -178,6 +178,7 @@ sync_emacs_service() {
 sync_agent_config() {
   [[ "$AGENT_TOOLS" -eq 1 ]] || return
 
+  sync_file "$DOTFILES_DIR/agent/dcg.toml" "$HOME/.config/dcg/config.toml"
   publish_personal_skills
   publish_shared_skills
 

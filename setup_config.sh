@@ -329,7 +329,7 @@ validate_source_files() {
         required_files+=("alacritty.toml")
     fi
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        required_files+=("agent/AGENTS.md")
+        required_files+=("agent/AGENTS.md" "agent/dcg.toml")
     fi
 
     for file in "${required_files[@]}"; do
@@ -1153,6 +1153,7 @@ backup_configs() {
         "$HOME/.config/clangd"
         "$HOME/.agents/skills/dotfiles-maintenance"
         "$HOME/.codex/AGENTS.md"
+        "$HOME/.config/dcg/config.toml"
     )
 
     local backed_up=0
@@ -1299,7 +1300,8 @@ copy_configs() {
     fi
 
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        mkdir -p ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.config/dotfiles
+        mkdir -p ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.config/dotfiles ~/.config/dcg
+        cp agent/dcg.toml ~/.config/dcg/config.toml
         publish_personal_skill_links
         publish_shared_skill_links
         if [[ ! -e ~/.config/dotfiles/agent.local.md ]]; then
@@ -1312,7 +1314,7 @@ copy_configs() {
                 cat ~/.config/dotfiles/agent.local.md
             fi
         } >~/.codex/AGENTS.md
-        print_success "agent config → shared Claude/Codex skills and ~/.codex/AGENTS.md"
+        print_success "agent config → DCG overrides, shared Claude/Codex skills, and ~/.codex/AGENTS.md"
     fi
 
     # Neovim

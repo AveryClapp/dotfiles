@@ -13,7 +13,7 @@ syntax:
 
 # Parse structured configuration without modifying it.
 config:
-    @python3 -c "import tomllib; tomllib.load(open('alacritty.toml', 'rb')); tomllib.load(open('.mise.toml', 'rb')); tomllib.load(open('.gitleaks.toml', 'rb'))"
+    @python3 -c "import tomllib; tomllib.load(open('alacritty.toml', 'rb')); tomllib.load(open('.mise.toml', 'rb')); tomllib.load(open('.gitleaks.toml', 'rb')); tomllib.load(open('agent/dcg.toml', 'rb'))"
     @socket="${TMPDIR:-/tmp}/dotfiles-tmux-check-$$.sock"; trap 'tmux -S "$socket" kill-server >/dev/null 2>&1 || true; rm -f "$socket"' EXIT; output="$(tmux -S "$socket" -f tmux.conf start-server \; show-options -g 2>&1)"; if [[ ! -S "$socket" ]]; then printf '%s\n' "$output" >&2; exit 1; fi
 
 # Run pinned shell analysis and compile every Neovim Lua file.

@@ -1,0 +1,16 @@
+# Destructive Command Guard overrides, synced to ~/.config/dcg/config.toml.
+# Built-in defaults apply to everything not listed here.
+
+[policy.rules]
+# This rule misreads `>` inside quoted strings as a redirect, so it warns
+# instead of blocking. Redirects into the home directory stay blocked by
+# core.filesystem:redirect-truncate-root-home.
+"core.filesystem:redirect-truncate-dynamic-path" = "warn"
+
+[overrides]
+allow = [
+    # Taking one side of a conflicted file while resolving a merge.
+    '^git checkout --(theirs|ours) -- [^;&|<>`$]+$',
+    # Deleting one cache folder under ~/.cache, never ~/.cache itself.
+    '^rm -rf (~|"\$HOME|\$HOME)/\.cache/[A-Za-z0-9_-][A-Za-z0-9._-]*(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*/?"?$',
+]
