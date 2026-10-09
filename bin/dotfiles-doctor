@@ -118,7 +118,7 @@ main() {
     info "no machine-local overrides (optional)"
   fi
 
-  if [[ -r "$HOME/.config/workmux/config.yaml" ]]; then
+  if [[ -x "$HOME/.local/bin/agent-doctor" ]]; then
     printf '\nAgent profile\n'
     if [[ -n "${PERSONAL_SKILLS_DIR:-}" ]]; then
       personal_skills_dir="$PERSONAL_SKILLS_DIR"
@@ -127,29 +127,22 @@ main() {
     else
       personal_skills_dir="$HOME/Documents/Coding/GitProjects/agent-skills"
     fi
-    for command_name in workmux bd dcg am; do
+    for command_name in bd dcg; do
       check_command "$command_name"
     done
-    if command -v ntm >/dev/null 2>&1; then
-      check_command ntm
-      check_active_file "$ROOT/agent/ntm.toml" "$HOME/.config/ntm/config.toml" 'NTM safe config'
-    else
-      info 'ntm is optional; install it with setup_config.sh --ntm'
-    fi
     if [[ -d "$personal_skills_dir/.git" ]]; then
       ok "personal skill repository: $personal_skills_dir"
     else
       warn "personal skill repository is missing: $personal_skills_dir"
     fi
-    for skill_name in agentic-engineering dotfiles-maintenance; do
-      skill_source="$personal_skills_dir/skills/$skill_name"
-      skill_catalog="$HOME/.agents/skills/$skill_name"
-      if [[ -L "$skill_catalog" && "$(readlink "$skill_catalog")" == "$skill_source" ]]; then
-        ok "shared $skill_name skill points to ../agent-skills"
-      else
-        warn "shared $skill_name skill is not linked to ../agent-skills; run make agent-sync"
-      fi
-    done
+    skill_name=dotfiles-maintenance
+    skill_source="$personal_skills_dir/skills/$skill_name"
+    skill_catalog="$HOME/.agents/skills/$skill_name"
+    if [[ -L "$skill_catalog" && "$(readlink "$skill_catalog")" == "$skill_source" ]]; then
+      ok "shared $skill_name skill points to ../agent-skills"
+    else
+      warn "shared $skill_name skill is not linked to ../agent-skills; run make agent-sync"
+    fi
   fi
 
   printf '\n'

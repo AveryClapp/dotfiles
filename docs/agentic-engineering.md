@@ -15,15 +15,11 @@ control which additional programs and configuration are installed.
 
 `--agent` is composable with the existing profiles. For example,
 `--profile ssh --agent` adds the agent layer to an SSH installation. `--ghostty`
-adds Ghostty without removing Alacritty. `--ntm` implies `--agent` and installs
-Named Tmux Manager without making it the task or worktree owner.
+adds Ghostty without removing Alacritty.
 
 ```bash
 # Headless or SSH host
 ./setup_config.sh --profile agent
-
-# Headless host with the optional NTM operator layer
-./setup_config.sh --profile agent --ntm
 
 # Local workstation, preserving the existing manual environment
 ./setup_config.sh --profile agent-workstation
@@ -38,13 +34,33 @@ Named Tmux Manager without making it the task or worktree owner.
 ./setup_config.sh --profile agent-workstation --dry-run
 ```
 
-Agent profiles install Beads, workmux, Destructive Command Guard, and MCP Agent
-Mail. Pass `--ntm` to add fleet dashboards, activity inspection, pane control,
-and robot output through NTM. Profiles also install CASS, ast-grep, gitleaks,
-Lefthook, just, mise, language servers, and the focused Claude plugin set when
-Claude is present. Use
-`--skip-agent-mail`, `--skip-dcg`, `--skip-personal-skills`, or
+Agent profiles install Beads, Destructive Command Guard, CASS, ast-grep,
+gitleaks, Lefthook, just, mise, language servers, and the focused Claude plugin
+set when Claude is present. Use `--skip-dcg`, `--skip-personal-skills`, or
 `--skip-claude-plugins` to omit an integration.
+
+## How Agents Work Here
+
+Agents work in the current checkout and delegate self-contained side work, such
+as research or an independent review, to headless subagents that report back.
+The dotfiles deliberately do not add worktree orchestration, inter-agent
+messaging, or tmux fleet management: coordinating many worktrees costs more
+than it saves. The global rules live in `agent/AGENTS.md`.
+
+Beads is installed for projects that keep a `.beads/` backlog. Agents use it for
+work that outlives a session, not as a per-step tracker. To adopt it in a
+project, run `bd init` and, if wanted, `bd setup claude` or `bd setup codex`.
+
+`agent-check` runs a repository's verification contract. It prefers
+`just check`, then repository scripts, Make, and native language test commands.
+Set `AGENT_CHECK_COMMAND` per machine or project when the conventional detector
+does not select the right command. `agent-doctor` checks the installed agent
+tools, skills, and plugins.
+
+This repository's `just check` parses shell, TOML, and tmux configuration, runs
+ShellCheck, compiles every Neovim Lua file, and scans the current tracked and
+untracked non-ignored tree with gitleaks. It does not scan Git-ignored local
+credential files. Install or refresh the hook with `just hooks`.
 
 ## Skill Packs
 
@@ -54,7 +70,7 @@ Third-party packs are optional:
 
 | Pack | Contents | Download impact |
 |---|---|---|
-| `general` | `grill-with-docs`, `domain-modeling`, `codebase-design`, `prototype`, `handoff`, `resolving-merge-conflicts` | Default, text only |
+| `general` | `grill-with-docs`, `domain-modeling`, `codebase-design`, `handoff`, `resolving-merge-conflicts` | Default, text only |
 | `web` | `vercel-react-best-practices`, `web-design-guidelines`, `agent-browser` | Downloads Chromium |
 | `security` | Cloudflare's `security-audit` | Text and validation scripts |
 | `research` | Matt Pocock's primary-source `research` workflow | Text only |
@@ -75,148 +91,22 @@ Third-party packs are optional:
 ./setup_config.sh --profile agent --skill-pack none --skip-personal-skills
 ```
 
-## Architecture
-
-```text
-Beads task
-  -> agent-new
-  -> workmux worktree + tmux window
-  -> Codex or Claude
-  -> optional NTM observation and pane control
-  -> checks + independent review
-  -> explicit agent-land
-```
-
-Beads is the centralized control plane and owns tasks, bugs, priorities,
-dependencies, follow-ups, and durable project memory. Workmux owns worktree and
-tmux lifecycle. Agent Mail owns messages and advisory file reservations. Git
-owns source history. NTM is an optional operator surface over tmux; it does not
-introduce a second task graph or bypass workmux isolation. The identifier should
-match across all coordination systems.
-
-## First Project Setup
-
-Run this once inside each project that should use the workflow:
-
-```bash
-agent doctor
-agent init
-```
-
-`agent-init` initializes Beads, installs its detected Codex/Claude integration,
-installs tools from an existing `.mise.toml`, activates an existing Lefthook
-configuration, adds the centralized Beads policy to project `AGENTS.md` and
-`CLAUDE.md`, and configures workmux status hooks and skills. Beads Git hooks
-are deliberately off by default so `git push` has no hidden Beads work; use
-`agent-init --beads-git-hooks` only when the repository wants Beads' full Git
-lifecycle integration. Pass `--no-tooling` to skip mise and Lefthook. On a
-repository where Beads state must remain private, use `agent-init --stealth`;
-this skips project hooks and agent-specific project files.
-
-The agent profile does not initialize Beads automatically. Repository metadata
-should be an explicit project decision.
-
-`agent init` is idempotent and can be rerun in an existing project. It refreshes
-the managed Beads integrations and replaces the dotfiles-owned policy blocks
-without overwriting project-specific instructions outside those markers. The
-first initialization of a repository without `.beads/` may add Beads metadata
-and an initialization commit. `agent init` therefore requires a clean worktree
-for the first normal initialization; commit or stash current changes, or use
-`--stealth` when Beads state must remain local.
-
-The unified `agent <command>` dispatcher maps to the underlying hyphenated
-commands, so `agent doctor`, `agent new`, and `agent status` are equivalent to
-`agent-doctor`, `agent-new`, and `agent-status`. Both forms remain supported.
-
-## Daily Workflow
-
-Create and inspect work:
-
-```bash
-bd create "Implement token refresh" -p 1 -t feature
-bd ready
-agent-new bd-a1b2
-```
-
-`agent-new` claims a Bead before launching its worktree. With no argument, it
-offers an `fzf` picker over ready tasks. In a repository with `.beads/`, create
-and claim a Bead before substantial work. The branch-only form is for repositories
-that have not adopted Beads:
-
-```bash
-agent-new fix-timeout --agent codex --prompt "Fix the timeout and add regression tests"
-agent-new docs-refresh --agent claude --layout solo --prompt-editor
-```
-
-Discovered defects and deferred work go into Beads immediately:
-
-```bash
-bd create "Bug: refresh token survives logout" -t bug \
-  --deps discovered-from:bd-a1b2
-bd create "Split cache migration" -t task --parent bd-a1b2
-```
-
-Create child Beads before dispatching independent workers. Any Claude or Codex
-session can launch another worker without surrendering its own pane:
-
-```bash
-agent new <child-id> --agent claude --background
-agent new <child-id> --agent codex --background
-```
-
-Each worker has an independent model context and worktree. The parent monitors
-Beads for authoritative state, uses Agent Mail for coordination, and uses
-`agent status`, `agent capture`, or `agent send` for tmux-level observation and
-intervention. Do not use private model task lists as a second source of truth.
-
-Inspect and communicate:
-
-```bash
-agent-status
-agent-status --dashboard
-agent-send %42 "Run the focused integration test and report the result"
-agent-capture %42 250
-```
-
-Review and land:
-
-```bash
-agent-review bd-a1b2
-agent-check
-bd close bd-a1b2 "Implemented and verified"
-agent-land
-agent-gc
-```
-
-`agent-land` runs `agent-check` and then performs a workmux rebase merge. It never
-runs automatically. Set `AGENT_CHECK_COMMAND` per machine or project when the
-conventional detector does not select the right command.
-
-`agent-check` prefers `just check`, then repository scripts, Make, and native
-language test commands. This repository's Lefthook configuration scans staged
-changes with gitleaks at commit time. There is deliberately no pre-push hook, so
-network operations do not inherit a hidden test-suite delay.
-
-This repository's `just check` parses shell, TOML, and tmux configuration, runs
-ShellCheck, compiles every Neovim Lua file, and scans the current tracked and
-untracked non-ignored tree with gitleaks. It does not scan Git-ignored local
-credential files. Install or refresh the hook with `just hooks`.
+Every installed skill's description loads into each agent session, so keep the
+set small and avoid skills that duplicate each other or built-in features.
 
 ## Hooks
 
-Four independent hook layers may be present, and only the first is a Git hook by
-default:
+Three independent hook layers may be present, and only the first is a Git hook
+by default:
 
 | Layer | Trigger | Behavior |
 |---|---|---|
 | Lefthook | Git `pre-commit` | Runs gitleaks against staged content and blocks a commit that contains a secret. There is no `pre-push` job. |
-| workmux agent hooks | Claude/Codex lifecycle events | Marks the tmux window working, waiting, or done. A Bash pre-tool hook invokes DCG to reject risky destructive commands. |
-| Beads agent hooks | Session start, prompt submission, and context compaction | Loads or refreshes `bd prime` context inside an initialized project. `bd setup codex` and `bd setup claude` own these project-local hooks. |
-| Beads Git hooks | Opt-in with `agent-init --beads-git-hooks` | Adds `pre-commit`, `post-merge`, `pre-push`, `post-checkout`, and commit-message integration for Beads synchronization and identity trailers. |
+| DCG | Claude Code Bash pre-tool hook | Rejects risky destructive commands before the agent shell runs them. |
+| Beads | Opt-in per project with `bd setup` or `bd hooks install` | Agent hooks refresh `bd prime` context; Git hooks synchronize Beads state on commit and push. |
 
 DCG is a guardrail, not a security boundary. It can stop a risky command before
 the agent shell runs it, but it does not replace sandboxing, review, or backups.
-The workmux status hooks only update tmux state; they do not run project tests.
 
 Inspect or exercise hooks without pushing:
 
@@ -228,99 +118,6 @@ bd hooks list
 
 Remove previously installed Beads Git hooks with `bd hooks uninstall`. Do this
 only after confirming the repository does not rely on them for Beads sync.
-
-## Agent Mail
-
-The agent profile installs a localhost user service and synchronizes the MCP
-client entries for detected agents. It prefers port `8765`, selects another
-local port when that port is occupied, and records the choice in
-`~/.config/dotfiles/agent-mail-port` and the Agent Mail CLI configuration. On SSH or
-container hosts where native
-user services are unavailable, it runs the server in a persistent tmux session
-named `agent-mail-service`.
-
-Agent Mail releases are validated by executing `am --version`. If the latest
-GNU binary requires a newer glibc than an x86_64 Linux host provides, setup
-falls back to the pinned static musl release configured by
-`AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION`.
-
-Inspect or restart the service with:
-
-```bash
-am service status
-am service restart
-am setup status
-tmux capture-pane -pt agent-mail-service
-```
-
-The server binds to localhost only. Use the Bead ID as the mail thread ID and
-reservation reason. Reserve narrow file globs with finite leases, announce
-interface changes, and release reservations at completion. A reservation is a
-coordination mechanism, not a substitute for worktree isolation.
-
-## tmux
-
-The original manual workflow remains available:
-
-| Key | Action |
-|---|---|
-| `prefix + w` | Existing manual branch/worktree sessionizer |
-| `prefix + W` | Select/claim task and launch an agent worktree |
-| `prefix + g` | workmux agent dashboard |
-| `prefix + G` | Jump to the latest completed/waiting agent |
-| `prefix + Tab` | Toggle between the two most recent agents |
-
-workmux status is included in the existing window format. The tmux status poll is
-five seconds rather than one second to keep idle fleet overhead modest.
-
-## NTM Operator Layer
-
-Install NTM explicitly; it is not part of the default agent profile:
-
-```bash
-./setup_config.sh --profile agent --ntm
-agent ntm deps -v
-```
-
-The dotfiles cache only `ntm completion bash`; they deliberately do not source
-`ntm shell bash`, because upstream shell integration currently defines aliases
-that bypass Claude and Codex safety controls. The upstream installer runs
-without modifying shell startup files. The `agent-ntm` wrapper restores common
-user-space binary paths and pins NTM to the active tmux binary, which matters on
-machines with multiple Homebrew prefixes.
-
-Use NTM first for visibility and operator control:
-
-```bash
-agent ntm list
-agent ntm status <session>
-agent ntm dashboard <session>
-agent ntm activity <session>
-agent ntm --robot-snapshot
-```
-
-Beads remains authoritative for task assignment and durable memory. Workmux
-continues to create, land, and clean up one worktree per agent. Do not use
-`ntm quick`, `ntm spawn`, `ntm add`, `ntm assign`, pipelines, or checkpoints for
-Beads-driven work unless the repository explicitly adopts an
-isolation-compatible NTM workflow. Project-scoped NTM state lives in `.ntm/` and
-should not be committed accidentally.
-
-The managed `agent/ntm.toml` removes every upstream agent-launch bypass flag,
-enables NTM's paranoid safety and privacy modes, disables automatic checkpoints
-and file reservations, and prevents automatic agent restarts. This keeps NTM
-observational by default while still allowing explicit operator actions.
-
-On Apple Silicon, `agent doctor` warns when both Intel Homebrew tmux under
-`/usr/local` and native Homebrew tmux under `/opt/homebrew` are linked. NTM
-currently checks `/usr/local` first, which can connect with the wrong client.
-If the Intel tmux package is no longer needed on `PATH`, unlink it without
-uninstalling it:
-
-```bash
-arch -x86_64 /usr/local/bin/brew unlink tmux
-# Reversible with: arch -x86_64 /usr/local/bin/brew link tmux
-```
 
 ## Shared Instructions And Skills
 
@@ -338,18 +135,12 @@ into the shared `~/.agents/skills` catalog, then publish that catalog under
 skills are preserved. List or update third-party skills with `npx skills list -g`
 and `npx skills update -g`.
 
-The `agentic-engineering` skill is the detailed operating protocol shared by
-Claude and Codex. Its trigger description covers Beads work, delegation,
-parallel agents, workmux, Agent Mail, tmux/NTM supervision, review, and landing.
-`agent init` also installs the concise ownership rules into each project's
-`AGENTS.md` and `CLAUDE.md`, so Beads remains authoritative even when a client
-does not activate the skill automatically.
-
 Claude Code receives Pyright, TypeScript, and Lua language servers and their LSP
-plugins, plus skill-creator and the PR review toolkit. `plugin-dev` is installed
-but disabled until explicitly needed. The large `academic-research-skills`
-plugin is also disabled by default; the lightweight portable `research` skill is
-available without its always-on context cost.
+plugins, plus the PR review toolkit. Claude already ships `skill-creator`, so the
+plugin copy is not installed. `plugin-dev` is installed but disabled until
+explicitly needed. The large `academic-research-skills` plugin is also disabled
+by default; the lightweight portable `research` skill is available without its
+always-on context cost.
 
 ## Search And Verification
 
@@ -390,9 +181,6 @@ is first used. Ghostty is not installed by the CLI-only agent profile.
 ## Upstream Components
 
 - [Beads](https://github.com/gastownhall/beads)
-- [workmux](https://github.com/raine/workmux)
-- [Named Tmux Manager](https://github.com/Dicklesworthstone/ntm)
-- [MCP Agent Mail](https://github.com/Dicklesworthstone/mcp_agent_mail_rust)
 - [Destructive Command Guard](https://github.com/Dicklesworthstone/destructive_command_guard)
 - [Agent Skills](https://agentskills.io/specification)
 - [Ghostty](https://ghostty.org/docs)

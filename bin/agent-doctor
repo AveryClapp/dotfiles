@@ -25,7 +25,7 @@ check_required() {
 
 printf 'Agent environment doctor\n\n'
 for command_name in \
-  git tmux fzf jq agent workmux bd dcg mise just ast-grep gitleaks lefthook cass \
+  git tmux fzf jq bd dcg mise just ast-grep gitleaks lefthook cass \
   pyright-langserver typescript-language-server lua-language-server; do
   check_required "$command_name"
 done
@@ -37,56 +37,10 @@ else
   warn 'no supported coding agent found (codex or claude)'
 fi
 
-if command -v am >/dev/null 2>&1; then
-  ok "Agent Mail: $(command -v am)"
-  if am --version >/dev/null 2>&1; then
-    agent_mail_port=8765
-    if [[ -r "$HOME/.config/dotfiles/agent-mail-port" ]]; then
-      read -r agent_mail_port <"$HOME/.config/dotfiles/agent-mail-port"
-    fi
-    [[ "$agent_mail_port" =~ ^[0-9]+$ ]] || agent_mail_port=8765
-    agent_mail_health="$(curl -fsS --max-time 2 \
-      "http://127.0.0.1:${agent_mail_port}/healthz" 2>/dev/null || true)"
-    if [[ "$agent_mail_health" == *'"status":"alive"'* ]]; then
-      ok "Agent Mail MCP service: 127.0.0.1:$agent_mail_port"
-    else
-      warn "Agent Mail MCP service is not healthy on 127.0.0.1:$agent_mail_port"
-    fi
-  else
-    warn 'Agent Mail is installed but cannot execute (check libc compatibility)'
-  fi
-else
-  warn 'Agent Mail is not installed (am)'
-fi
-
 if command -v agent-browser >/dev/null 2>&1; then
   ok "agent-browser: $(command -v agent-browser)"
 else
   info 'agent-browser is installed by the optional web skill pack'
-fi
-
-if command -v ntm >/dev/null 2>&1; then
-  if ntm version >/dev/null 2>&1; then
-    ok "NTM: $(ntm version 2>/dev/null | head -n 1)"
-  else
-    warn 'NTM is installed but cannot execute'
-  fi
-  ntm_config="$HOME/.config/ntm/config.toml"
-  if [[ ! -r "$ntm_config" ]]; then
-    warn 'NTM safe config is missing; rerun the agent profile sync'
-  elif grep -Eq -- 'dangerously-(skip|bypass)|--yolo|--always-approve' "$ntm_config"; then
-    warn 'NTM config contains an agent approval or sandbox bypass'
-  elif ntm --config "$ntm_config" config validate >/dev/null 2>&1; then
-    ok 'NTM safe config is installed and valid'
-  else
-    warn 'NTM safe config did not validate'
-  fi
-  if [[ "$(uname -s)" == Darwin && "$(uname -m)" == arm64 \
-    && -x /usr/local/bin/tmux && -x /opt/homebrew/bin/tmux ]]; then
-    warn 'NTM may select legacy /usr/local/bin/tmux before native Homebrew tmux'
-  fi
-else
-  info 'NTM is optional; install it with dotfiles setup --ntm'
 fi
 
 if command -v ghostty >/dev/null 2>&1; then
@@ -98,11 +52,6 @@ else
 fi
 
 printf '\n'
-if [[ -r "$HOME/.config/workmux/config.yaml" ]]; then
-  ok 'workmux config installed'
-else
-  warn 'workmux config is missing'
-fi
 if [[ -d "$PERSONAL_SKILLS_DIR/.git" ]]; then
   ok "personal skill repository: $PERSONAL_SKILLS_DIR"
   personal_skills_remote="$(git -C "$PERSONAL_SKILLS_DIR" remote get-url origin 2>/dev/null || true)"
@@ -120,40 +69,20 @@ if [[ -d "$PERSONAL_SKILLS_DIR/.git" ]]; then
 else
   warn "personal skill repository is missing: $PERSONAL_SKILLS_DIR"
 fi
-for skill_name in agentic-engineering dotfiles-maintenance; do
-  skill_source="$PERSONAL_SKILLS_DIR/skills/$skill_name"
-  skill_catalog="$HOME/.agents/skills/$skill_name"
-  if [[ -r "$skill_source/SKILL.md" ]]; then
-    ok "personal skill source: $skill_name"
-  else
-    warn "personal skill source is missing: $skill_source"
-  fi
-  if [[ -L "$skill_catalog" && "$(readlink "$skill_catalog")" == "$skill_source" ]]; then
-    ok "shared skill link: $skill_name"
-  elif [[ -r "$skill_catalog/SKILL.md" ]]; then
-    warn "shared skill is readable but not linked to $PERSONAL_SKILLS_DIR: $skill_name"
-  else
-    warn "shared skill is missing: $skill_name"
-  fi
-done
-if [[ -r "$HOME/.agents/skills/agentic-engineering/SKILL.md" ]]; then
-  if grep -q '^## Operate With NTM$' "$HOME/.agents/skills/agentic-engineering/SKILL.md"; then
-    ok 'canonical agentic-engineering skill includes NTM guidance'
-  else
-    warn 'canonical agentic-engineering skill lacks NTM guidance; refresh ../agent-skills'
-  fi
+skill_name=dotfiles-maintenance
+skill_source="$PERSONAL_SKILLS_DIR/skills/$skill_name"
+skill_catalog="$HOME/.agents/skills/$skill_name"
+if [[ -r "$skill_source/SKILL.md" ]]; then
+  ok "personal skill source: $skill_name"
 else
-  warn 'shared agent skill is missing'
+  warn "personal skill source is missing: $skill_source"
 fi
-if [[ -r "$HOME/.claude/skills/agentic-engineering/SKILL.md" ]]; then
-  ok 'agentic-engineering skill published to Claude Code'
+if [[ -L "$skill_catalog" && "$(readlink "$skill_catalog")" == "$skill_source" ]]; then
+  ok "shared skill link: $skill_name"
+elif [[ -r "$skill_catalog/SKILL.md" ]]; then
+  warn "shared skill is readable but not linked to $PERSONAL_SKILLS_DIR: $skill_name"
 else
-  warn 'agentic-engineering skill is not published to Claude Code'
-fi
-if [[ -r "$HOME/.codex/skills/agentic-engineering/SKILL.md" ]]; then
-  ok 'agentic-engineering skill published to Codex'
-else
-  warn 'agentic-engineering skill is not published to Codex'
+  warn "shared skill is missing: $skill_name"
 fi
 if [[ -s "$HOME/.codex/AGENTS.md" ]]; then
   ok 'Codex global guidance installed'
@@ -167,7 +96,6 @@ if command -v claude >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
     pyright-lsp@claude-plugins-official \
     typescript-lsp@claude-plugins-official \
     lua-lsp@claude-plugins-official \
-    skill-creator@claude-plugins-official \
     pr-review-toolkit@claude-plugins-official; do
     if jq -e --arg id "$plugin_id" '.[] | select(.id == $id and .enabled == true)' \
       >/dev/null 2>&1 <<<"$plugins_json"; then
@@ -213,7 +141,7 @@ if [[ -d "$root/.beads" ]]; then
     ok 'current repository has no Beads pre-push hook'
   fi
 else
-  info 'current repository has no .beads directory; run agent-init when desired'
+  info 'current repository has no .beads directory'
 fi
 
 printf '\n'

@@ -4,49 +4,23 @@ Work from the repository's own instructions and tooling before applying these
 defaults. Keep changes scoped, preserve unrelated user work, and verify behavior
 with the narrowest relevant checks before reporting completion.
 
-## Beads Control Plane
+## Working Style
 
-- When a repository contains `.beads/`, Beads is the authoritative source for
-  tasks, bugs, priorities, dependencies, follow-ups, and durable project memory.
-- Run `bd prime` at session start, then use `bd ready`, `bd show <id>`,
-  `bd update <id> --claim`, and `bd close <id>` around implementation work.
-- Do not begin substantial untracked work in a Beads repository. Create and claim
-  a Bead first when the user request does not already have one.
-- When any defect is discovered, immediately create a bug Bead before continuing:
-  `bd create "Bug: <concise title>" -t bug`. Link it with
-  `--deps discovered-from:<current-id>` when working from another Bead. Do this
-  even when the defect will be fixed in the current session, then close it only
-  after verification.
-- Record every deferred improvement or follow-up as a Bead. Do not use markdown
-  TODO files, private agent task lists, or chat context as a competing tracker.
-- Use `bd remember` for durable project knowledge instead of ad hoc memory files.
-- Do not initialize Beads in a repository that lacks `.beads/` unless the user or
-  repository explicitly requests it; `agent init` can add project files and an
-  initialization commit.
+- Work in the current checkout. Do not create worktrees, branches, tmux
+  sessions, or task trackers to organize your own work unless the user asks.
+- Delegate only self-contained side work, such as research, a focused review,
+  or an independent search, to headless subagents that report back. Keep
+  integration and the final diff in your own session.
+- A reviewer reports findings and does not edit the code under review.
 
-## Parallel Work
+## Beads
 
-- Use one Git worktree per independent task or agent.
-- Parallelize only work with clear ownership boundaries.
-- Before editing shared files, check Agent Mail reservations when it is available.
-- Use the Bead ID as the worktree handle, mail thread ID, and commit reference.
-- Create child Beads before dispatching independent Claude or Codex workers, and
-  preserve parent or `discovered-from` relationships in the Beads graph.
-- Keep review independent: a reviewer reports findings and does not silently alter
-  the implementation under review. Reviewers create bug Beads for actionable
-  defects before reporting them.
-
-## NTM Operator Layer
-
-- Consult the shared `agentic-engineering` skill before substantial coordinated
-  work, delegation, independent review, or multi-agent operation.
-- When NTM is installed, use it for named tmux session visibility, dashboards,
-  activity checks, pane messaging, and machine-readable operator snapshots.
-- Beads remains the task and memory control plane. Do not duplicate tasks in NTM
-  pipelines, checkpoints, or private agent state.
-- workmux remains responsible for one-worktree-per-agent creation, branch landing,
-  and cleanup. Do not use NTM spawning or assignment commands for Beads work unless
-  the operator or repository explicitly adopts an isolation-compatible workflow.
+- When a repository contains `.beads/`, use it as the backlog for work that
+  outlives the session: check `bd ready` for existing work, and record deferred
+  follow-ups as Beads instead of TODO files.
+- Do not create Beads for routine steps or for defects fixed in the same change.
+- Do not initialize Beads in a repository that lacks `.beads/` unless the user
+  asks.
 
 ## Safety And Verification
 

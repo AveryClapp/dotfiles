@@ -67,8 +67,6 @@ SKIP_RUST=0
 SKIP_TPM=0
 AGENT_TOOLS=0
 INSTALL_GHOSTTY=0
-INSTALL_NTM=0
-SKIP_AGENT_MAIL=0
 SKIP_DCG=0
 SKIP_CLAUDE_PLUGINS=0
 SKIP_PERSONAL_SKILLS=0
@@ -76,9 +74,6 @@ SKILL_PACKS_SET=0
 SKILL_PACKS=()
 PERSONAL_SKILLS_REPO="${PERSONAL_SKILLS_REPO:-https://github.com/AveryClapp/agent-skills.git}"
 PERSONAL_SKILLS_DIR="${PERSONAL_SKILLS_DIR:-$(cd "$DOTFILES_DIR/.." && pwd)/agent-skills}"
-AGENT_MAIL_INSTALLER_URL="https://raw.githubusercontent.com/Dicklesworthstone/mcp_agent_mail_rust/main/install.sh"
-AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION="${AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION:-v0.3.10}"
-NTM_INSTALLER_URL="https://raw.githubusercontent.com/Dicklesworthstone/ntm/main/install.sh"
 
 ################################################################################
 # Utility Functions
@@ -147,18 +142,15 @@ Profiles:
   --profile ssh, --ssh  Terminal-only setup for SSH machines:
                         shell, git, tmux, nvim, CLI tools; no Alacritty,
                         fonts, Emacs, Doom, or launchd agent.
-  --profile agent       SSH-style setup plus Beads, workmux, Agent Mail, DCG,
-                        shared skills, and agent workflow commands.
+  --profile agent       SSH-style setup plus Beads, DCG, shared skills, and
+                        agent CLI tools.
   --profile agent-workstation
                         Full setup plus the agent toolchain and Ghostty. Existing
                         Alacritty and manual workflows remain installed.
 
 Options:
   --agent               Add agent tooling to the selected full/ssh profile.
-  --ntm                 Install Named Tmux Manager as an optional operator layer.
-                        Implies --agent; Beads and workmux remain authoritative.
   --ghostty             Install and sync Ghostty without removing Alacritty.
-  --skip-agent-mail     Skip MCP Agent Mail installation.
   --skip-dcg            Skip Destructive Command Guard installation.
   --skill-pack PACK     Install a portable skill pack for Claude and Codex.
                         Repeatable: general, web, security, research, all, none.
@@ -201,15 +193,8 @@ parse_args() {
             --agent)
                 AGENT_TOOLS=1
                 ;;
-            --ntm)
-                AGENT_TOOLS=1
-                INSTALL_NTM=1
-                ;;
             --ghostty)
                 INSTALL_GHOSTTY=1
-                ;;
-            --skip-agent-mail)
-                SKIP_AGENT_MAIL=1
                 ;;
             --skip-dcg)
                 SKIP_DCG=1
@@ -344,7 +329,7 @@ validate_source_files() {
         required_files+=("alacritty.toml")
     fi
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        required_files+=("agent/AGENTS.md" "agent/workmux.yaml" "agent/ntm.toml")
+        required_files+=("agent/AGENTS.md")
     fi
 
     for file in "${required_files[@]}"; do
@@ -836,66 +821,6 @@ run_user_installer() {
     return "$status"
 }
 
-agent_mail_executable_works() {
-    command_exists am && am --version >/dev/null 2>&1
-}
-
-install_agent_mail_compat() {
-    [[ "$OS" == "linux" && "$(uname -m)" =~ ^(x86_64|amd64)$ ]] || return 1
-    print_warning "Installing static Agent Mail $AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION for Linux compatibility"
-    run_user_installer \
-        "${AGENT_MAIL_INSTALLER_URL}?$(date +%s)" \
-        --version "$AGENT_MAIL_LINUX_X86_64_COMPAT_VERSION" --force --yes --verify
-}
-
-install_agent_mail() {
-    if agent_mail_executable_works; then
-        print_info "MCP Agent Mail already installed"
-        return
-    fi
-
-    if command_exists am; then
-        print_warning "The installed Agent Mail binary cannot run on this host"
-        install_agent_mail_compat || true
-    else
-        run_user_installer \
-            "${AGENT_MAIL_INSTALLER_URL}?$(date +%s)" \
-            --yes --verify \
-            || print_warning "Could not install the latest MCP Agent Mail release"
-        agent_mail_executable_works || install_agent_mail_compat || true
-    fi
-
-    if agent_mail_executable_works; then
-        print_success "MCP Agent Mail installed: $(am --version 2>/dev/null | head -n 1)"
-    else
-        print_warning "MCP Agent Mail is installed but cannot execute on this host"
-    fi
-}
-
-install_ntm() {
-    [[ "$INSTALL_NTM" -eq 1 ]] || return
-
-    if command_exists ntm && ntm version >/dev/null 2>&1; then
-        print_info "Refreshing Named Tmux Manager: $(ntm version 2>/dev/null | head -n 1)"
-    else
-        print_info "Installing Named Tmux Manager in user space..."
-    fi
-
-    mkdir -p "$HOME/.local/bin"
-    run_user_installer \
-        "${NTM_INSTALLER_URL}?$(date +%s)" \
-        "--dir=$HOME/.local/bin" --no-shell \
-        || print_warning "Could not install Named Tmux Manager"
-
-    export PATH="$HOME/.local/bin:$PATH"
-    hash -r
-    if command_exists ntm && ntm version >/dev/null 2>&1; then
-        print_success "Named Tmux Manager installed: $(ntm version 2>/dev/null | head -n 1)"
-    else
-        print_warning "Named Tmux Manager is not executable; rerun setup with --ntm"
-    fi
-}
-
 mise_use_global() {
     command_exists mise || {
         print_warning "mise is required to install user-space agent tools"
@@ -967,7 +892,7 @@ install_portable_skill_packs() {
     if skill_pack_enabled general; then
         print_info "Installing general engineering skills for Claude and Codex..."
         install_skill_source mattpocock/skills \
-            grill-with-docs domain-modeling codebase-design prototype handoff resolving-merge-conflicts \
+            grill-with-docs domain-modeling codebase-design handoff resolving-merge-conflicts \
             || print_warning "Could not install the general skill pack"
     fi
     if skill_pack_enabled web; then
@@ -1065,7 +990,6 @@ configure_claude_plugins() {
     install_claude_plugin pyright-lsp@claude-plugins-official
     install_claude_plugin typescript-lsp@claude-plugins-official
     install_claude_plugin lua-lsp@claude-plugins-official
-    install_claude_plugin skill-creator@claude-plugins-official
     install_claude_plugin pr-review-toolkit@claude-plugins-official
     install_claude_plugin plugin-dev@claude-plugins-official
     claude plugin disable plugin-dev@claude-plugins-official --scope user >/dev/null 2>&1 || true
@@ -1087,18 +1011,10 @@ install_agent_tools() {
         else
             brew install beads
         fi
-        if brew list --formula workmux >/dev/null 2>&1; then
-            brew upgrade workmux || true
-        else
-            brew install raine/workmux/workmux
-        fi
     else
         run_user_installer \
             "https://raw.githubusercontent.com/gastownhall/beads/main/scripts/install.sh" \
             || print_warning "Could not install Beads"
-        run_user_installer \
-            "https://raw.githubusercontent.com/raine/workmux/main/scripts/install.sh" \
-            || print_warning "Could not install workmux"
     fi
 
     if [[ "$SKIP_DCG" -eq 0 ]]; then
@@ -1112,14 +1028,8 @@ install_agent_tools() {
         fi
     fi
 
-    if [[ "$SKIP_AGENT_MAIL" -eq 0 ]]; then
-        install_agent_mail
-    fi
-
-    install_ntm
-
     if ! command_exists codex && ! command_exists claude; then
-        print_warning "No coding agent found; install Codex or Claude Code before using workmux"
+        print_warning "No coding agent found; install Codex or Claude Code"
     fi
     install_agent_cli_tools
     print_success "Agent workflow tools installed"
@@ -1146,106 +1056,6 @@ install_ghostty() {
         return
     fi
     print_success "Ghostty installed"
-}
-
-configure_agent_integrations() {
-    [[ "$AGENT_TOOLS" -eq 1 ]] || return
-    if command_exists workmux; then
-        print_info "Configuring workmux agent status hooks and skills..."
-        workmux setup --hooks --skills \
-            || print_warning "workmux setup needs attention; run it manually"
-    fi
-    configure_agent_mail
-}
-
-agent_mail_endpoint_healthy() {
-    local port="$1" response
-    response="$(curl -fsS --max-time 2 "http://127.0.0.1:${port}/healthz" 2>/dev/null || true)"
-    [[ "$response" == *'"status":"alive"'* ]]
-}
-
-localhost_port_in_use() {
-    local port="$1"
-    (exec 3<>"/dev/tcp/127.0.0.1/$port") >/dev/null 2>&1
-}
-
-start_agent_mail_tmux_service() {
-    local port="$1" session="agent-mail-service" am_path server_command
-    command_exists tmux || return 1
-    am_path="$(command -v am)"
-
-    if tmux has-session -t "$session" 2>/dev/null; then
-        tmux kill-session -t "$session" || return 1
-    fi
-    printf -v server_command \
-        'exec %q serve-http --host 127.0.0.1 --port %q --no-tui' \
-        "$am_path" "$port"
-    tmux new-session -d -s "$session" "$server_command"
-}
-
-configure_agent_mail() {
-    [[ "$SKIP_AGENT_MAIL" -eq 0 ]] || return
-    agent_mail_executable_works || {
-        print_warning "Agent Mail cannot execute; skipping MCP service setup"
-        return
-    }
-
-    local port_file="$HOME/.config/dotfiles/agent-mail-port"
-    local cli_env_file="$HOME/.config/mcp-agent-mail/config.env"
-    local preferred_port="8765" port="" candidate
-    if [[ -r "$port_file" ]]; then
-        read -r preferred_port <"$port_file"
-        [[ "$preferred_port" =~ ^[0-9]+$ ]] || preferred_port="8765"
-    fi
-
-    for candidate in "$preferred_port" 8765 8766 8767 9000; do
-        [[ "$candidate" =~ ^[0-9]+$ ]] || continue
-        if agent_mail_endpoint_healthy "$candidate" || ! localhost_port_in_use "$candidate"; then
-            port="$candidate"
-            break
-        fi
-    done
-    if [[ -z "$port" ]]; then
-        print_warning "Could not find a free localhost port for Agent Mail"
-        return
-    fi
-
-    if ! agent_mail_endpoint_healthy "$port"; then
-        print_info "Starting the Agent Mail user service on 127.0.0.1:$port..."
-        if am service install --host 127.0.0.1 --port "$port"; then
-            for _ in {1..20}; do
-                agent_mail_endpoint_healthy "$port" && break
-                sleep 1
-            done
-        else
-            print_warning "Could not install the Agent Mail user service; trying persistent tmux"
-        fi
-    fi
-
-    if ! agent_mail_endpoint_healthy "$port"; then
-        print_info "Starting Agent Mail in the agent-mail-service tmux session..."
-        if start_agent_mail_tmux_service "$port"; then
-            for _ in {1..20}; do
-                agent_mail_endpoint_healthy "$port" && break
-                sleep 1
-            done
-        fi
-    fi
-
-    if ! agent_mail_endpoint_healthy "$port"; then
-        print_warning "Agent Mail did not become healthy on 127.0.0.1:$port"
-        print_warning "Inspect it with 'am service status' or 'tmux capture-pane -pt agent-mail-service'"
-        return
-    fi
-
-    mkdir -p "$(dirname "$port_file")" "$(dirname "$cli_env_file")"
-    printf '%s\n' "$port" >"$port_file"
-    print_info "Synchronizing Agent Mail CLI and MCP clients..."
-    am config set-port --env-file "$cli_env_file" "$port" \
-        || print_warning "Agent Mail CLI port configuration needs attention; run 'am config set-port --env-file $cli_env_file $port'"
-    am setup run --yes --no-hooks --host 127.0.0.1 --port "$port" --project-dir "$HOME" \
-        || print_warning "Agent Mail MCP client setup needs attention; run 'am setup status'"
-    print_success "Agent Mail is ready on 127.0.0.1:$port"
 }
 
 configure_git_delta() {
@@ -1339,14 +1149,9 @@ backup_configs() {
         "$HOME/.config/doom"
         "$HOME/.config/alacritty"
         "$HOME/.config/ghostty"
-        "$HOME/.config/workmux"
-        "$HOME/.config/ntm"
         "$HOME/.config/taskwarrior-tui"
         "$HOME/.config/clangd"
-        "$HOME/.agents/skills/agentic-engineering"
         "$HOME/.agents/skills/dotfiles-maintenance"
-        "$HOME/.claude/skills/agentic-engineering"
-        "$HOME/.codex/skills/agentic-engineering"
         "$HOME/.codex/AGENTS.md"
     )
 
@@ -1467,7 +1272,7 @@ copy_configs() {
     chmod +x ~/.local/bin/dotfiles-doctor
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
         local agent_script
-        for agent_script in agent agent-init agent-new agent-send agent-capture agent-status agent-check agent-review agent-land agent-gc agent-doctor agent-ntm; do
+        for agent_script in agent-check agent-doctor; do
             cp "bin/$agent_script" "$HOME/.local/bin/$agent_script"
             chmod +x "$HOME/.local/bin/$agent_script"
         done
@@ -1494,9 +1299,7 @@ copy_configs() {
     fi
 
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        mkdir -p ~/.config/workmux ~/.config/ntm ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.config/dotfiles
-        cp agent/workmux.yaml ~/.config/workmux/config.yaml
-        cp agent/ntm.toml ~/.config/ntm/config.toml
+        mkdir -p ~/.agents/skills ~/.claude/skills ~/.codex/skills ~/.config/dotfiles
         publish_personal_skill_links
         publish_shared_skill_links
         if [[ ! -e ~/.config/dotfiles/agent.local.md ]]; then
@@ -1509,7 +1312,7 @@ copy_configs() {
                 cat ~/.config/dotfiles/agent.local.md
             fi
         } >~/.codex/AGENTS.md
-        print_success "agent config → workmux, NTM, shared Claude/Codex skills, and ~/.codex/AGENTS.md"
+        print_success "agent config → shared Claude/Codex skills and ~/.codex/AGENTS.md"
     fi
 
     # Neovim
@@ -1593,19 +1396,16 @@ main() {
     echo "  7. Configure git to use delta if available"
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
         if [[ "$SKIP_PACKAGES" -eq 0 ]]; then
-            echo "  8. Install Beads, workmux, Agent Mail, DCG, agent CLIs, and workflow commands"
-            if [[ "$INSTALL_NTM" -eq 1 ]]; then
-                echo "     NTM: operator dashboard and pane control; workmux keeps worktree ownership"
-            fi
+            echo "  8. Install Beads, DCG, agent CLIs, and agent commands"
             if [[ "$SKIP_PERSONAL_SKILLS" -eq 0 ]]; then
                 echo "     Personal skills: clone or clean fast-forward $PERSONAL_SKILLS_REPO -> $PERSONAL_SKILLS_DIR"
             fi
             echo "     Skill packs: ${SKILL_PACKS[*]:-none}"
             if [[ "$SKIP_CLAUDE_PLUGINS" -eq 0 ]]; then
-                echo "     Claude plugins: language intelligence, skill creator, and PR review"
+                echo "     Claude plugins: language intelligence and PR review"
             fi
         else
-            echo "  8. Sync shared agent config, skills, and workflow commands"
+            echo "  8. Sync shared agent config, skills, and agent commands"
         fi
     fi
     if [[ "$INSTALL_GHOSTTY" -eq 1 ]]; then
@@ -1650,7 +1450,6 @@ main() {
     install_emacs_daemon
     configure_github_credentials
     configure_git_delta
-    configure_agent_integrations
     configure_bash_default
 
     echo ""
@@ -1671,13 +1470,7 @@ main() {
         next_step=$((next_step + 1))
     fi
     if [[ "$AGENT_TOOLS" -eq 1 ]]; then
-        echo "  $next_step. Run 'agent doctor', then run 'agent init' inside projects that should use Beads"
-        next_step=$((next_step + 1))
-        echo "  $next_step. Confirm Agent Mail with 'am service status'"
-        if [[ "$INSTALL_NTM" -eq 1 ]]; then
-            next_step=$((next_step + 1))
-            echo "  $next_step. Confirm NTM integrations with 'agent ntm deps -v'"
-        fi
+        echo "  $next_step. Run 'agent-doctor'"
     fi
     echo ""
 

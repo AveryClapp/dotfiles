@@ -11,8 +11,7 @@ Personal development environment with a unified Kanagawa Wave theme. Built for C
 | **Bash** | Shell with smart navigation, history search, eza, bat, git-delta |
 | **Alacritty** | GPU-accelerated terminal |
 | **Ghostty** | Agent-workstation terminal with shell integration and notifications |
-| **Beads + workmux** | Agent task graph, isolated worktrees, and tmux lifecycle |
-| **NTM** | Optional named-session dashboard and multi-agent operator interface |
+| **Beads** | Cross-session task backlog for projects that opt in |
 | **mise + just** | Pinned project tools and one human/agent verification contract |
 | **CASS + ast-grep** | Cross-agent history search and structural code search |
 
@@ -41,7 +40,6 @@ For the additive agentic engineering environment:
 ```bash
 ./setup_config.sh --profile agent              # CLI/SSH host
 ./setup_config.sh --profile agent-workstation  # full setup + Ghostty
-./setup_config.sh --profile agent --ntm        # add NTM on an SSH/CLI host
 ./setup_config.sh --profile agent-workstation --skill-pack all
 ```
 
@@ -50,17 +48,10 @@ not remove Alacritty or the manual worktree/sessionizer workflow. See
 [docs/agentic-engineering.md](docs/agentic-engineering.md) for the architecture,
 commands, and operating protocol.
 
-In initialized projects, Beads is the central control plane for Claude and
-Codex. Tasks, discovered bugs, dependencies, follow-ups, and child-agent work all
-receive Bead IDs; workmux and Agent Mail use those IDs for execution and
-coordination. Run `agent init` in new or existing repositories; rerunning it
-refreshes managed integration blocks while preserving project-specific guidance.
-
-NTM is opt-in with `--ntm`. It adds fleet visibility, activity inspection,
-dashboards, and pane controls without replacing Beads or workmux. Use
-`agent ntm deps -v` to verify integrations and `agent ntm --help` to inspect its
-operator commands. `agent new`, `agent land`, and `agent gc` continue to enforce
-the isolated worktree lifecycle.
+Agents work in the current checkout and delegate side tasks to headless
+subagents. Projects that keep a `.beads/` backlog use it for work that outlives
+a session; the dotfiles do not create worktrees or task-tracking rituals for
+agents.
 
 Agent profiles install the portable `general` skill pack by default. Add
 `--skill-pack web`, `security`, or `research` as needed; the option is
@@ -92,7 +83,7 @@ packages are unavailable.
 new machine; subsequent dotfiles syncs restore Git's GitHub CLI credential
 helper automatically.
 
-**Agent profile** — run `agent doctor` and `just check`. Both should complete
+**Agent profile**: run `agent-doctor` and `just check`. Both should complete
 without warnings before the first agent task.
 
 ## Syncing Existing Machines
@@ -137,8 +128,8 @@ alacritty.toml                  # terminal config
 bin/tmux-sessionizer            # project session switcher (prefix+f)
 bin/tmux-worktree               # git worktree + session switcher (prefix+w)
 bin/dotfiles-doctor             # shell, Git, architecture, and config checks
-bin/agent, bin/agent-*          # agent dispatcher, workmux lifecycle, NTM access
-agent/                          # workmux defaults and global agent guidance
+bin/agent-check, agent-doctor   # verification contract and agent environment checks
+agent/                          # global agent guidance
 ghostty/                        # optional agent-workstation terminal config
 .mise.toml                      # pinned repository development tools
 justfile                        # canonical check, lint, security, and sync tasks
@@ -192,10 +183,6 @@ Prefix: `Ctrl-a`
 |-----|--------|
 | `prefix + f` | Sessionizer — fuzzy-find project, create/switch session |
 | `prefix + w` | Worktree — pick branch, create worktree + session |
-| `prefix + W` | Agent worktree — claim/select a task and launch workmux |
-| `prefix + g` | Agent dashboard |
-| `prefix + G` | Jump to latest completed/waiting agent |
-| `prefix + Tab` | Toggle between recent agents |
 | `prefix + arrows` | Switch panes (repeatable) |
 | `prefix + hjkl` | Resize panes (enter resize mode, spam freely, Esc to exit) |
 | `Alt + Left/Right` | Switch windows |
